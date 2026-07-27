@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎬 Auto Video Creator</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #0d0f14;
+    --surface:  #161b24;
+    --border:   #252d3a;
+    --accent:   #f5c518;
+    --accent2:  #e8971a;
+    --text:     #e8eaf0;
+    --muted:    #6b7694;
+    --green:    #22c55e;
+    --red:      #ef4444;
+    --radius:   12px;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+    padding: 0 0 60px;
+  }
+
+  /* Header */
+  header {
+    background: linear-gradient(135deg, #0d0f14 0%, #161b24 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(12px);
+  }
+  .logo { font-size: 28px; }
+  .header-text h1 { font-size: 18px; font-weight: 700; color: var(--accent); letter-spacing: 0.3px; }
+  .header-text p  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .badge {
+    margin-left: auto;
+    background: var(--accent);
+    color: #000;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+  }
+
+  /* Layout */
+  main {
+    max-width: 1100px;
+    margin: 28px auto;
+    padding: 0 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 800px) { main { grid-template-columns: 1fr; } }
+
+  .full-width { grid-column: 1 / -1; }
+
+  /* Card */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--accent);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title .icon { font-size: 16px; }
+
+  /* Drop zones */
+  .drop-zone {
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    padding: 24px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .drop-zone:hover, .drop-zone.drag-over {
+    border-color: var(--accent);
+    background: rgba(245, 197, 24, 0.05);
+  }
+  .drop-zone.has-file {
+    border-color: var(--green);
+    background: rgba(34, 197, 94, 0.05);
+  }
+  .drop-zone input[type=file] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+  .drop-icon { font-size: 32px; }
+  .drop-label { font-size: 13px; font-weight: 600; color: var(--text); }
+  .drop-hint  { font-size: 11px; color: var(--muted); }
+  .file-name  { font-size: 12px; color: var(--green); font-weight: 600; word-break: break-all; }
+
+  /* Form controls */
+  label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+
+  textarea, input[type=text] {
+    width: 100%;
+    background: #0d0f14;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    padding: 10px 12px;
+    resize: vertical;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+  textarea:focus, input[type=text]:focus { border-color: var(--accent); }
+
+  #titleText {
+    font-size: 15px;
+    font-weight: 600;
+    min-height: 90px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  #subtitleText {
+    font-style: italic;
+    color: var(--accent);
+    min-height: 50px;
+  }
+
+  .preview-text {
+    background: #000;
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .preview-title    { color: #fff; font-weight: 700; font-size: 13px; text-shadow: 2px 2px 4px rgba(0,0,0,0.9); white-space: pre-line; }
+  .preview-subtitle { color: #f5c518; font-style: italic; font-size: 11px; text-shadow: 1px 1px 3px rgba(0,0,0,0.9); }
+
+  /* Sliders */
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .slider-row label {
+    width: 160px;
+    margin: 0;
+    flex-shrink: 0;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .slider-row input[type=range] {
+    flex: 1;
+    -webkit-appearance: none;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--border);
+    outline: none;
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    box-shadow: 0 0 6px rgba(245,197,24,0.5);
+  }
+  .slider-val {
+    width: 44px;
+    text-align: right;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+  }
+
+  /* Toggle */
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .toggle-row label { margin: 0; color: var(--muted); font-size: 12px; cursor: pointer; }
+  .toggle {
+    position: relative; width: 36px; height: 20px;
+    flex-shrink: 0;
+  }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider {
+    position: absolute; inset: 0;
+    background: var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  .toggle-slider::before {
+    content: ''; position: absolute;
+    width: 14px; height: 14px;
+    left: 3px; top: 3px;
+    background: #fff;
+    border-radius: 50%;
+    transition: 0.2s;
+  }
+  .toggle input:checked + .toggle-slider { background: var(--accent); }
+  .toggle input:checked + .toggle-slider::before { transform: translateX(16px); }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #000;
+    width: 100%;
+    font-size: 16px;
+    padding: 14px;
+    border-radius: 10px;
+    letter-spacing: 0.3px;
+  }
+  .btn-primary:hover { background: var(--accent2); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(245,197,24,0.3); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+  .btn-download {
+    background: var(--green);
+    color: #000;
+    font-size: 15px;
+    padding: 12px 28px;
+    border-radius: 10px;
+  }
+  .btn-download:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-reset {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 13px;
+  }
+  .btn-reset:hover { border-color: var(--text); color: var(--text); }
+
+  /* Progress */
+  #progressSection {
+    display: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+  .progress-header {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+  }
+  .spinner {
+    width: 20px; height: 20px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .progress-bar-wrap {
+    background: var(--border);
+    border-radius: 4px;
+    height: 8px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 4px;
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+  .progress-msg { font-size: 12px; color: var(--muted); }
+
+  /* Result */
+  #resultSection {
+    display: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+  .result-header {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+  }
+  .result-icon { font-size: 24px; }
+  .result-title { font-size: 15px; font-weight: 700; color: var(--green); }
+  .result-meta  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  video {
+    width: 100%;
+    border-radius: 8px;
+    background: #000;
+    margin-bottom: 14px;
+    max-height: 400px;
+  }
+  .result-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  /* Error */
+  .error-box {
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 8px;
+    padding: 12px 16px;
+    color: var(--red);
+    font-size: 13px;
+    display: none;
+  }
+  pre.err-log {
+    margin-top: 8px;
+    font-size: 10px;
+    color: var(--muted);
+    white-space: pre-wrap;
+    max-height: 120px;
+    overflow-y: auto;
+    background: #0d0f14;
+    border-radius: 6px;
+    padding: 8px;
+  }
+
+  .divider { height: 1px; background: var(--border); margin: 14px 0; }
+
+  .tip {
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .char-count { font-size: 11px; color: var(--muted); text-align: right; margin-top: 4px; }
+
+  /* Color swatch picker */
+  .color-swatch {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px; height: 26px;
+    border-radius: 6px;
+    border: 2px solid var(--border);
+    cursor: pointer;
+    overflow: hidden;
+    flex-shrink: 0;
+    transition: border-color 0.15s;
+  }
+  .color-swatch:hover { border-color: var(--accent); }
+  .color-swatch input[type=color] {
+    width: 200%; height: 200%;
+    margin: -50%; border: none; padding: 0; cursor: pointer;
+    background: none;
+  }
+
+  /* Transition select */
+  .select-row {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+  }
+  .select-row label { width: 160px; margin: 0; flex-shrink: 0; color: var(--muted); font-size: 12px; }
+  .select-row select {
+    flex: 1;
+    background: #0d0f14;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 12px;
+    padding: 6px 10px;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b7694'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 28px;
+  }
+  .select-row select:focus { border-color: var(--accent); }
+
+  /* Tabs for settings */
+  .tabs { display: flex; gap: 4px; margin-bottom: 14px; }
+  .tab-btn {
+    flex: 1; padding: 7px; border: 1px solid var(--border);
+    background: transparent; color: var(--muted);
+    border-radius: 7px; font-size: 12px; cursor: pointer; font-weight: 600;
+    transition: all 0.15s;
+  }
+  .tab-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  /* Multi-video list */
+  .video-add-zone {
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  .video-add-zone:hover, .video-add-zone.drag-over {
+    border-color: var(--accent);
+    background: rgba(245, 197, 24, 0.05);
+  }
+  .video-add-zone input[type=file] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+  .video-add-zone .add-icon { font-size: 20px; }
+  .video-add-zone .add-label { font-size: 13px; font-weight: 600; color: var(--text); }
+  .video-add-zone .add-hint  { font-size: 11px; color: var(--muted); }
+
+  .video-list { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+
+  .video-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #0d0f14;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: grab;
+    transition: border-color 0.15s, opacity 0.15s;
+    user-select: none;
+  }
+  .video-item:active { cursor: grabbing; }
+  .video-item.drag-target { border-color: var(--accent); background: rgba(245,197,24,0.06); }
+  .video-item.dragging { opacity: 0.4; }
+
+  .vi-num {
+    font-size: 11px; font-weight: 700;
+    background: var(--border); color: var(--muted);
+    border-radius: 50%; width: 22px; height: 22px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .vi-name {
+    flex: 1; font-size: 12px; color: var(--text);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .vi-size { font-size: 11px; color: var(--muted); flex-shrink: 0; }
+
+  .vi-actions { display: flex; gap: 4px; flex-shrink: 0; }
+  .vi-btn {
+    background: var(--border); border: none; color: var(--muted);
+    border-radius: 5px; width: 26px; height: 26px;
+    font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, color 0.15s;
+  }
+  .vi-btn:hover { background: var(--accent); color: #000; }
+  .vi-btn.remove:hover { background: var(--red); color: #fff; }
+
+  .video-count-badge {
+    margin-left: auto;
+    background: var(--accent); color: #000;
+    font-size: 11px; font-weight: 700;
+    padding: 2px 8px; border-radius: 12px;
+  }
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo">🎬</div>
+  <div class="header-text">
+    <h1>AUTO VIDEO CREATOR</h1>
+    <p>Source video + Overlay đen + Text tiếng Việt + Nhạc nền → Xuất MP4 tự động</p>
+  </div>
+  <span class="badge">v2.0</span>
+</header>
+
+<main>
+
+  <!-- ── Cột trái ── -->
+
+  <!-- 1. Upload Video (multi) -->
+  <div class="card">
+    <div class="card-title">
+      <span class="icon">🎥</span> Video Nguồn
+      <span class="video-count-badge" id="videoCountBadge">0 video</span>
+    </div>
+
+    <!-- Drop zone để thêm video -->
+    <div class="video-add-zone" id="videoAddZone">
+      <input type="file" id="videoInput" accept="video/*" multiple>
+      <span class="add-icon">➕</span>
+      <div>
+        <div class="add-label">Thêm video (kéo thả hoặc click)</div>
+        <div class="add-hint">MP4, MOV, AVI, MKV… — chọn nhiều file cùng lúc</div>
+      </div>
+    </div>
+
+    <!-- Danh sách video đã thêm -->
+    <div class="video-list" id="videoList"></div>
+
+    <div class="tip" style="margin-top:10px">
+      💡 Các video ghép nối tiếp theo thứ tự, tự động scale về 1080×1920
+    </div>
+  </div>
+
+  <!-- 2. Upload Nhạc -->
+  <div class="card">
+    <div class="card-title"><span class="icon">🎵</span> Nhạc Nền (tuỳ chọn)</div>
+    <div class="drop-zone" id="musicZone">
+      <input type="file" id="musicInput" accept="audio/*">
+      <span class="drop-icon">🎶</span>
+      <span class="drop-label">Kéo thả hoặc click chọn nhạc</span>
+      <span class="drop-hint">MP3, WAV, AAC, OGG…</span>
+      <span class="file-name" id="musicName" style="display:none"></span>
+    </div>
+    <div class="divider"></div>
+    <div class="toggle-row">
+      <label class="toggle">
+        <input type="checkbox" id="keepOrigAudio">
+        <span class="toggle-slider"></span>
+      </label>
+      <label for="keepOrigAudio">Giữ âm thanh gốc của video (trộn với nhạc)</label>
+    </div>
+  </div>
+
+  <!-- 3. Nội dung Text -->
+  <div class="card full-width">
+    <div class="card-title"><span class="icon">✍️</span> Nội Dung Text</div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px">
+      <!-- Title -->
+      <div>
+        <label style="display:flex;align-items:center;gap:8px">
+          <span>TIÊU ĐỀ (bold) — Enter để xuống dòng</span>
+          <label class="color-swatch" title="Màu tiêu đề">
+            <input type="color" id="titleColor" value="#ffffff">
+          </label>
+        </label>
+        <textarea id="titleText" placeholder="Nhập tiêu đề video...&#10;Dùng Enter để xuống dòng thủ công&#10;Ví dụ:&#10;KỶ LUẬT KHÔNG PHẢI LÀ TỰ TƯỚC ĐI TỰ DO&#10;MÀ LÀ CÁCH DUY NHẤT ĐỂ NGƯỜI&#10;ĐÀN ÔNG LÀM CHỦ CUỘC ĐỜI MÌNH" rows="5"></textarea>
+        <div class="char-count" id="titleCount">0 ký tự</div>
+
+        <div class="toggle-row" style="margin-top:8px">
+          <label class="toggle">
+            <input type="checkbox" id="autoWrap" checked>
+            <span class="toggle-slider"></span>
+          </label>
+          <label for="autoWrap">Tự động xuống dòng (auto-wrap)</label>
+        </div>
+      </div>
+
+      <!-- Subtitle -->
+      <div>
+        <label style="display:flex;align-items:center;gap:8px">
+          <span>PHỤ ĐỀ (italic) — tự động thêm ngoặc ()</span>
+          <label class="color-swatch" title="Màu phụ đề">
+            <input type="color" id="subColor" value="#ffff00">
+          </label>
+        </label>
+        <textarea id="subtitleText" placeholder="xem xong bạn sẽ muốn thay đổi ngay" rows="3" style="font-style:italic;color:#ffff00"></textarea>
+
+        <!-- Preview text -->
+        <div class="preview-text" id="textPreview">
+          <span class="preview-title" id="prevTitle">—</span>
+          <span class="preview-subtitle" id="prevSub" style="display:none"></span>
+        </div>
+        <div class="tip" style="margin-top:6px">👀 Preview text (chưa có overlay)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Cài đặt video / âm thanh -->
+  <div class="card">
+    <div class="card-title"><span class="icon">⚙️</span> Cài Đặt</div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="visual">🎨 Hình ảnh</button>
+      <button class="tab-btn" data-tab="text">📝 Text</button>
+      <button class="tab-btn" data-tab="audio">🔊 Âm thanh</button>
+    </div>
+
+    <!-- Visual tab -->
+    <div class="tab-pane active" id="tab-visual">
+      <div class="slider-row">
+        <label>Độ tối overlay</label>
+        <input type="range" id="overlayOpacity" min="0" max="0.9" step="0.05" value="0.45">
+        <span class="slider-val" id="overlayVal">45%</span>
+      </div>
+      <div class="tip" style="margin-bottom:14px">⬆️ Tăng để chữ dễ đọc hơn, giảm để thấy rõ video hơn</div>
+
+      <div class="divider"></div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;margin-top:10px">
+        ✨ Hiệu ứng chuyển cảnh (khi có nhiều video)
+      </div>
+
+      <div class="select-row">
+        <label>Loại hiệu ứng</label>
+        <select id="transitionEffect">
+          <option value="none">— Không có (cắt thẳng)</option>
+          <option value="fade">Fade (mờ dần)</option>
+          <option value="fadeblack">Fade qua đen</option>
+          <option value="dissolve">Dissolve (hoà tan)</option>
+          <option value="wipeleft">Wipe trái →</option>
+          <option value="wiperight">Wipe phải ←</option>
+          <option value="wipeup">Wipe lên ↑</option>
+          <option value="wipedown">Wipe xuống ↓</option>
+          <option value="slideleft">Slide trái</option>
+          <option value="slideright">Slide phải</option>
+          <option value="smoothleft">Smooth trái</option>
+          <option value="smoothright">Smooth phải</option>
+          <option value="circleopen">Mở hình tròn</option>
+          <option value="circleclose">Đóng hình tròn</option>
+          <option value="pixelize">Pixel hoá</option>
+          <option value="radial">Xoay tròn</option>
+        </select>
+      </div>
+      <div class="slider-row">
+        <label>Thời gian chuyển cảnh</label>
+        <input type="range" id="transitionDuration" min="0.2" max="1.5" step="0.1" value="0.5">
+        <span class="slider-val" id="transitionDurVal">0.5s</span>
+      </div>
+    </div>
+
+    <!-- Text tab -->
+    <div class="tab-pane" id="tab-text">
+      <div class="slider-row">
+        <label>Vị trí dọc text</label>
+        <input type="range" id="textY" min="30" max="80" step="1" value="52">
+        <span class="slider-val" id="textYVal">52%</span>
+      </div>
+      <div class="slider-row">
+        <label>Cỡ chữ tiêu đề</label>
+        <input type="range" id="titleFontSize" min="28" max="80" step="2" value="46">
+        <span class="slider-val" id="titleFontVal">46px</span>
+      </div>
+      <div class="slider-row">
+        <label>Cỡ chữ phụ đề</label>
+        <input type="range" id="subFontSize" min="20" max="60" step="2" value="38">
+        <span class="slider-val" id="subFontVal">38px</span>
+      </div>
+      <div class="slider-row">
+        <label>Ký tự/dòng (auto-wrap)</label>
+        <input type="range" id="maxChars" min="10" max="40" step="1" value="20">
+        <span class="slider-val" id="maxCharsVal">20</span>
+      </div>
+    </div>
+
+    <!-- Audio tab -->
+    <div class="tab-pane" id="tab-audio">
+      <div class="slider-row">
+        <label>Âm lượng nhạc nền</label>
+        <input type="range" id="musicVolume" min="0" max="1" step="0.05" value="0.65">
+        <span class="slider-val" id="musicVolumeVal">65%</span>
+      </div>
+      <div class="slider-row">
+        <label>Âm lượng tiếng gốc</label>
+        <input type="range" id="origVolume" min="0" max="1" step="0.05" value="0.15">
+        <span class="slider-val" id="origVolumeVal">15%</span>
+      </div>
+      <div class="tip">🎵 Nhạc sẽ loop tự động nếu ngắn hơn video</div>
+    </div>
+  </div>
+
+  <!-- 5. Batch info + Process button -->
+  <div class="card">
+    <div class="card-title"><span class="icon">🚀</span> Xuất Video</div>
+
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.6">
+      Pipeline: <strong style="color:var(--text)">Video nguồn</strong> →
+      <strong style="color:var(--text)">Scale 1080×1920</strong> →
+      <strong style="color:var(--text)">Overlay đen</strong> →
+      <strong style="color:var(--text)">Thêm text</strong> →
+      <strong style="color:var(--text)">Ghép nhạc</strong> →
+      <strong style="color:var(--accent)">Output MP4</strong>
+    </p>
+
+    <button class="btn btn-primary" id="processBtn" onclick="startProcess()">
+      ⚡ TẠO VIDEO
+    </button>
+
+    <div class="divider"></div>
+
+    <!-- Progress -->
+    <div id="progressSection">
+      <div class="progress-header">
+        <div class="spinner" id="spinner"></div>
+        <span style="font-size:13px;font-weight:600">Đang xử lý video...</span>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <div class="progress-msg" id="progressMsg">Đang chuẩn bị...</div>
+    </div>
+
+    <!-- Error -->
+    <div class="error-box" id="errorBox">
+      <strong>❌ Lỗi:</strong> <span id="errorMsg"></span>
+      <pre class="err-log" id="errLog" style="display:none"></pre>
+    </div>
+
+    <!-- Result -->
+    <div id="resultSection">
+      <div class="result-header">
+        <span class="result-icon">✅</span>
+        <div>
+          <div class="result-title">Video đã hoàn thành!</div>
+          <div class="result-meta" id="resultMeta"></div>
+        </div>
+      </div>
+      <video id="previewVideo" controls playsinline></video>
+      <div class="result-actions">
+        <a class="btn btn-download" id="downloadBtn" href="#" download>⬇️ Tải về MP4</a>
+        <button class="btn btn-reset" onclick="resetForm()">🔄 Tạo video mới</button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ── Multi-video management ────────────────────────────────────────────────────
+
+let videoFiles = []; // File[] — ordered list of source videos
+let dragSrcIdx = null;
+
+const videoInput   = document.getElementById('videoInput');
+const videoAddZone = document.getElementById('videoAddZone');
+const videoList    = document.getElementById('videoList');
+const videoCountBadge = document.getElementById('videoCountBadge');
+
+function addVideos(files) {
+  for (const f of files) {
+    if (f.type.startsWith('video/') || /\.(mp4|mov|avi|mkv|webm|m4v|flv)$/i.test(f.name)) {
+      videoFiles.push(f);
+    }
+  }
+  renderVideoList();
+}
+
+function removeVideo(i) {
+  videoFiles.splice(i, 1);
+  renderVideoList();
+}
+
+function moveVideo(i, dir) {
+  const j = i + dir;
+  if (j < 0 || j >= videoFiles.length) return;
+  [videoFiles[i], videoFiles[j]] = [videoFiles[j], videoFiles[i]];
+  renderVideoList();
+}
+
+function renderVideoList() {
+  videoCountBadge.textContent = videoFiles.length + ' video';
+  videoList.innerHTML = '';
+
+  videoFiles.forEach((f, i) => {
+    const item = document.createElement('div');
+    item.className = 'video-item';
+    item.draggable = true;
+    item.dataset.idx = i;
+
+    item.innerHTML = `
+      <span class="vi-num">${i + 1}</span>
+      <span class="vi-name" title="${f.name}">${f.name}</span>
+      <span class="vi-size">${(f.size / 1024 / 1024).toFixed(1)} MB</span>
+      <div class="vi-actions">
+        <button class="vi-btn" title="Lên" onclick="moveVideo(${i},-1)">↑</button>
+        <button class="vi-btn" title="Xuống" onclick="moveVideo(${i},1)">↓</button>
+        <button class="vi-btn remove" title="Xóa" onclick="removeVideo(${i})">✕</button>
+      </div>`;
+
+    // Drag-to-reorder
+    item.addEventListener('dragstart', () => { dragSrcIdx = i; item.classList.add('dragging'); });
+    item.addEventListener('dragend',   () => { dragSrcIdx = null; item.classList.remove('dragging'); });
+    item.addEventListener('dragover',  e => { e.preventDefault(); item.classList.add('drag-target'); });
+    item.addEventListener('dragleave', () => item.classList.remove('drag-target'));
+    item.addEventListener('drop', e => {
+      e.preventDefault();
+      item.classList.remove('drag-target');
+      if (dragSrcIdx !== null && dragSrcIdx !== i) {
+        const moved = videoFiles.splice(dragSrcIdx, 1)[0];
+        videoFiles.splice(i, 0, moved);
+        renderVideoList();
+      }
+    });
+
+    videoList.appendChild(item);
+  });
+
+  // Reset input so same file can be re-added
+  videoInput.value = '';
+}
+
+videoInput.addEventListener('change', () => addVideos(Array.from(videoInput.files)));
+
+videoAddZone.addEventListener('dragover', e => { e.preventDefault(); videoAddZone.classList.add('drag-over'); });
+videoAddZone.addEventListener('dragleave', () => videoAddZone.classList.remove('drag-over'));
+videoAddZone.addEventListener('drop', e => {
+  e.preventDefault();
+  videoAddZone.classList.remove('drag-over');
+  addVideos(Array.from(e.dataTransfer.files));
+});
+
+// ── Music drop zone ───────────────────────────────────────────────────────────
+
+function setupDropZone(zoneId, inputId, nameId) {
+  const zone  = document.getElementById(zoneId);
+  const input = document.getElementById(inputId);
+  const name  = document.getElementById(nameId);
+
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) setMusicFile(input, name, zone, file);
+  });
+  input.addEventListener('change', () => {
+    if (input.files[0]) setMusicFile(input, name, zone, input.files[0]);
+  });
+}
+
+function setMusicFile(input, nameEl, zone, file) {
+  const dt = new DataTransfer();
+  dt.items.add(file);
+  input.files = dt.files;
+  nameEl.textContent = `✅ ${file.name} (${(file.size/1024/1024).toFixed(1)} MB)`;
+  nameEl.style.display = 'block';
+  zone.classList.add('has-file');
+}
+
+setupDropZone('musicZone', 'musicInput', 'musicName');
+
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const tab = btn.dataset.tab;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + tab).classList.add('active');
+  });
+});
+
+// ── Sliders ───────────────────────────────────────────────────────────────────
+
+function bindSlider(id, valId, fmt) {
+  const el  = document.getElementById(id);
+  const val = document.getElementById(valId);
+  const update = () => { val.textContent = fmt(parseFloat(el.value)); };
+  el.addEventListener('input', update);
+  update();
+}
+
+bindSlider('overlayOpacity',      'overlayVal',       v => Math.round(v * 100) + '%');
+bindSlider('transitionDuration', 'transitionDurVal', v => v.toFixed(1) + 's');
+bindSlider('textY',          'textYVal',       v => Math.round(v) + '%');
+bindSlider('titleFontSize',  'titleFontVal',   v => Math.round(v) + 'px');
+bindSlider('subFontSize',    'subFontVal',     v => Math.round(v) + 'px');
+bindSlider('maxChars',       'maxCharsVal',    v => Math.round(v));
+bindSlider('musicVolume',    'musicVolumeVal', v => Math.round(v * 100) + '%');
+bindSlider('origVolume',     'origVolumeVal',  v => Math.round(v * 100) + '%');
+
+// ── Text preview ──────────────────────────────────────────────────────────────
+
+const titleTA    = document.getElementById('titleText');
+const subTA      = document.getElementById('subtitleText');
+const titleColor = document.getElementById('titleColor');
+const subColor   = document.getElementById('subColor');
+
+function updatePreview() {
+  const title     = titleTA.value.trim().toUpperCase();
+  const sub       = subTA.value.trim();
+  const prevTitle = document.getElementById('prevTitle');
+  const prevSub   = document.getElementById('prevSub');
+
+  prevTitle.textContent = title || '—';
+  prevTitle.style.color = titleColor.value;
+
+  if (sub) {
+    const subText = sub.startsWith('(') ? sub : `(${sub})`;
+    prevSub.textContent = subText;
+    prevSub.style.color = subColor.value;
+    prevSub.style.display = '';
+  } else {
+    prevSub.style.display = 'none';
+  }
+
+  document.getElementById('titleCount').textContent = titleTA.value.length + ' ký tự';
+}
+
+// Sync subtitle textarea color with picker
+subColor.addEventListener('input', () => {
+  subTA.style.color = subColor.value;
+  updatePreview();
+});
+titleColor.addEventListener('input', updatePreview);
+
+titleTA.addEventListener('input', updatePreview);
+subTA.addEventListener('input', updatePreview);
+updatePreview();
+
+// ── Validation ────────────────────────────────────────────────────────────────
+
+function validate() {
+  if (videoFiles.length === 0) {
+    alert('⚠️ Vui lòng thêm ít nhất 1 video nguồn');
+    return false;
+  }
+  if (!document.getElementById('titleText').value.trim()) {
+    alert('⚠️ Vui lòng nhập nội dung tiêu đề');
+    return false;
+  }
+  return true;
+}
+
+// ── API base URL ──────────────────────────────────────────────────────────────
+// Dùng window.location.origin để hoạt động trong mọi context (localhost, proxy, preview panel)
+// Fallback về localhost:3000 nếu origin không hợp lệ
+const API_BASE = (() => {
+  try {
+    const o = window.location.origin;
+    // origin hợp lệ phải bắt đầu bằng http:// hoặc https://
+    if (o && o.startsWith('http')) return o;
+  } catch(e) {}
+  return 'http://localhost:3000';
+})();
+
+// ── Process ───────────────────────────────────────────────────────────────────
+
+let currentJobId = null;
+let sseSource    = null;
+
+async function startProcess() {
+  if (!validate()) return;
+
+  // Reset UI
+  document.getElementById('errorBox').style.display = 'none';
+  document.getElementById('resultSection').style.display = 'none';
+  document.getElementById('progressSection').style.display = 'block';
+  document.getElementById('processBtn').disabled = true;
+  document.getElementById('progressBar').style.width = '0%';
+  document.getElementById('progressMsg').textContent = `Đang upload ${videoFiles.length} video${videoFiles.length > 1 ? ' (ghép nối tiếp)' : ''}...`;
+
+  try {
+    const fd = new FormData();
+    videoFiles.forEach(f => fd.append('video', f));
+    const music = document.getElementById('musicInput').files[0];
+    if (music) fd.append('music', music);
+
+    fd.append('titleText',     document.getElementById('titleText').value.trim().toUpperCase());
+    fd.append('subtitleText',  document.getElementById('subtitleText').value.trim());
+    fd.append('autoWrap',      document.getElementById('autoWrap').checked);
+    fd.append('maxChars',      document.getElementById('maxChars').value);
+    fd.append('overlayOpacity',document.getElementById('overlayOpacity').value);
+    fd.append('textY',         document.getElementById('textY').value);
+    fd.append('titleFontSize', document.getElementById('titleFontSize').value);
+    fd.append('subFontSize',   document.getElementById('subFontSize').value);
+    fd.append('musicVolume',   document.getElementById('musicVolume').value);
+    fd.append('origVolume',    document.getElementById('origVolume').value);
+    fd.append('keepOrigAudio', document.getElementById('keepOrigAudio').checked);
+    fd.append('titleColor',         document.getElementById('titleColor').value);
+    fd.append('subColor',           document.getElementById('subColor').value);
+    fd.append('transitionEffect',   document.getElementById('transitionEffect').value);
+    fd.append('transitionDuration', document.getElementById('transitionDuration').value);
+
+    document.getElementById('progressMsg').textContent = 'Đang gửi lên server...';
+
+    const resp = await fetch(`${API_BASE}/process`, { method: 'POST', body: fd });
+    const data = await resp.json();
+
+    if (!resp.ok || data.error) {
+      showError(data.error || 'Lỗi không xác định');
+      return;
+    }
+
+    currentJobId = data.jobId;
+    document.getElementById('progressMsg').textContent = 'FFmpeg đang xử lý...';
+
+    // Listen via SSE
+    sseSource = new EventSource(`${API_BASE}/status/${currentJobId}`);
+    sseSource.onmessage = e => handleStatus(JSON.parse(e.data));
+    sseSource.onerror   = () => {
+      sseSource.close();
+      showError('Mất kết nối với server');
+    };
+
+  } catch (err) {
+    showError(err.message);
+  }
+}
+
+function handleStatus(job) {
+  if (job.error) {
+    sseSource?.close();
+    showError(job.error, job.log);
+    return;
+  }
+
+  if (job.status === 'processing') {
+    const pct = job.progress || 0;
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('progressMsg').textContent = `Xử lý: ${pct}% hoàn thành...`;
+    return;
+  }
+
+  if (job.status === 'done') {
+    sseSource?.close();
+    document.getElementById('progressSection').style.display = 'none';
+
+    const vid      = document.getElementById('previewVideo');
+    const dlBtn    = document.getElementById('downloadBtn');
+    const metaEl   = document.getElementById('resultMeta');
+
+    vid.src    = `${API_BASE}/preview/${currentJobId}`;
+    dlBtn.href = `${API_BASE}/download/${currentJobId}`;
+    metaEl.textContent = job.sizeMB ? `Kích thước: ${job.sizeMB} MB` : '';
+
+    document.getElementById('resultSection').style.display = 'block';
+    document.getElementById('processBtn').disabled = false;
+
+    // Scroll xuống result
+    document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+function showError(msg, log) {
+  document.getElementById('progressSection').style.display = 'none';
+  document.getElementById('processBtn').disabled = false;
+  document.getElementById('errorMsg').textContent = msg;
+  const logEl = document.getElementById('errLog');
+  if (log) {
+    logEl.textContent = log;
+    logEl.style.display = 'block';
+  } else {
+    logEl.style.display = 'none';
+  }
+  document.getElementById('errorBox').style.display = 'block';
+}
+
+function resetForm() {
+  document.getElementById('resultSection').style.display = 'none';
+  document.getElementById('errorBox').style.display = 'none';
+  document.getElementById('previewVideo').src = '';
+  document.getElementById('musicName').style.display = 'none';
+  document.getElementById('musicZone').classList.remove('has-file');
+  document.getElementById('musicInput').value = '';
+  videoFiles = [];
+  renderVideoList();
+  currentJobId = null;
+}
+</script>
+
+</body>
+</html>
