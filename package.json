@@ -1,7 +1,7 @@
 {
   "name": "auto-video-creator",
-  "version": "1.0.0",
-  "description": "Tự động tạo video: source + overlay đen + text + nhạc",
+  "version": "3.0.0",
+  "description": "Auto video: Google Drive source + AI content + batch MP4",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
@@ -9,6 +9,8 @@
   "dependencies": {
     "express": "^4.18.2",
     "multer": "^1.4.5-lts.1",
-    "ffmpeg-static": "^5.2.0"
+    "ffmpeg-static": "^5.2.0",
+    "@anthropic-ai/sdk": "^0.32.0",
+    "dotenv": "^16.4.5"
   }
 }

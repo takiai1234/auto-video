@@ -8,16 +8,17 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --bg:       #0d0f14;
-    --surface:  #161b24;
-    --border:   #252d3a;
-    --accent:   #f5c518;
-    --accent2:  #e8971a;
-    --text:     #e8eaf0;
-    --muted:    #6b7694;
-    --green:    #22c55e;
-    --red:      #ef4444;
-    --radius:   12px;
+    --bg:      #0d0f14;
+    --surface: #161b24;
+    --border:  #252d3a;
+    --accent:  #f5c518;
+    --accent2: #e8971a;
+    --text:    #e8eaf0;
+    --muted:   #6b7694;
+    --green:   #22c55e;
+    --red:     #ef4444;
+    --blue:    #3b82f6;
+    --radius:  12px;
   }
 
   body {
@@ -26,51 +27,46 @@
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     font-size: 14px;
     min-height: 100vh;
-    padding: 0 0 60px;
+    padding: 0 0 80px;
   }
 
-  /* Header */
   header {
-    background: linear-gradient(135deg, #0d0f14 0%, #161b24 100%);
+    background: linear-gradient(135deg, #0d0f14, #161b24);
     border-bottom: 1px solid var(--border);
-    padding: 20px 32px;
+    padding: 18px 32px;
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 14px;
     position: sticky;
     top: 0;
     z-index: 100;
     backdrop-filter: blur(12px);
   }
-  .logo { font-size: 28px; }
-  .header-text h1 { font-size: 18px; font-weight: 700; color: var(--accent); letter-spacing: 0.3px; }
-  .header-text p  { font-size: 12px; color: var(--muted); margin-top: 2px; }
-
+  .logo { font-size: 26px; }
+  .header-text h1 { font-size: 17px; font-weight: 700; color: var(--accent); }
+  .header-text p  { font-size: 11px; color: var(--muted); margin-top: 2px; }
   .badge {
     margin-left: auto;
     background: var(--accent);
     color: #000;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
     padding: 3px 10px;
     border-radius: 20px;
     letter-spacing: 0.5px;
   }
 
-  /* Layout */
   main {
-    max-width: 1100px;
-    margin: 28px auto;
+    max-width: 1140px;
+    margin: 24px auto;
     padding: 0 20px;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 20px;
+    gap: 18px;
   }
   @media (max-width: 800px) { main { grid-template-columns: 1fr; } }
-
   .full-width { grid-column: 1 / -1; }
 
-  /* Card */
   .card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -78,54 +74,20 @@
     padding: 20px;
   }
   .card-title {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.8px;
     color: var(--accent);
-    margin-bottom: 14px;
+    margin-bottom: 16px;
     display: flex;
     align-items: center;
     gap: 8px;
   }
-  .card-title .icon { font-size: 16px; }
 
-  /* Drop zones */
-  .drop-zone {
-    border: 2px dashed var(--border);
-    border-radius: 10px;
-    padding: 24px 16px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    position: relative;
-    min-height: 100px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-  }
-  .drop-zone:hover, .drop-zone.drag-over {
-    border-color: var(--accent);
-    background: rgba(245, 197, 24, 0.05);
-  }
-  .drop-zone.has-file {
-    border-color: var(--green);
-    background: rgba(34, 197, 94, 0.05);
-  }
-  .drop-zone input[type=file] {
-    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
-  }
-  .drop-icon { font-size: 32px; }
-  .drop-label { font-size: 13px; font-weight: 600; color: var(--text); }
-  .drop-hint  { font-size: 11px; color: var(--muted); }
-  .file-name  { font-size: 12px; color: var(--green); font-weight: 600; word-break: break-all; }
+  label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
 
-  /* Form controls */
-  label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
-
-  textarea, input[type=text] {
+  input[type=text], input[type=password], textarea {
     width: 100%;
     background: #0d0f14;
     border: 1px solid var(--border);
@@ -133,56 +95,35 @@
     color: var(--text);
     font-family: inherit;
     font-size: 14px;
-    padding: 10px 12px;
-    resize: vertical;
-    transition: border-color 0.2s;
+    padding: 9px 12px;
     outline: none;
+    transition: border-color 0.2s;
   }
-  textarea:focus, input[type=text]:focus { border-color: var(--accent); }
+  input[type=text]:focus, input[type=password]:focus, textarea:focus { border-color: var(--accent); }
+  textarea { resize: vertical; }
 
-  #titleText {
-    font-size: 15px;
-    font-weight: 600;
-    min-height: 90px;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-  }
-  #subtitleText {
-    font-style: italic;
-    color: var(--accent);
-    min-height: 50px;
-  }
+  .input-row { display: flex; gap: 10px; align-items: flex-end; }
+  .input-row > div { flex: 1; }
 
-  .preview-text {
-    background: #000;
-    border-radius: 10px;
-    padding: 16px;
-    text-align: center;
-    min-height: 80px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
+  /* Drive section */
+  .drive-status {
     margin-top: 10px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    display: none;
   }
-  .preview-title    { color: #fff; font-weight: 700; font-size: 13px; text-shadow: 2px 2px 4px rgba(0,0,0,0.9); white-space: pre-line; }
-  .preview-subtitle { color: #f5c518; font-style: italic; font-size: 11px; text-shadow: 1px 1px 3px rgba(0,0,0,0.9); }
+  .drive-status.success { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); color: var(--green); }
+  .drive-status.error   { background: rgba(239,68,68,0.1);  border: 1px solid rgba(239,68,68,0.3);  color: var(--red); }
 
-  /* Sliders */
+  /* Slider rows */
   .slider-row {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 14px;
+    margin-bottom: 12px;
   }
-  .slider-row label {
-    width: 160px;
-    margin: 0;
-    flex-shrink: 0;
-    color: var(--muted);
-    font-size: 12px;
-  }
+  .slider-row label { width: 160px; margin: 0; flex-shrink: 0; }
   .slider-row input[type=range] {
     flex: 1;
     -webkit-appearance: none;
@@ -198,903 +139,820 @@
     border-radius: 50%;
     background: var(--accent);
     cursor: pointer;
-    box-shadow: 0 0 6px rgba(245,197,24,0.5);
+    box-shadow: 0 0 6px rgba(245,197,24,.5);
   }
-  .slider-val {
-    width: 44px;
-    text-align: right;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--accent);
-  }
+  .slider-val { width: 44px; text-align: right; font-size: 12px; font-weight: 600; color: var(--accent); }
 
   /* Toggle */
-  .toggle-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 12px;
-  }
-  .toggle-row label { margin: 0; color: var(--muted); font-size: 12px; cursor: pointer; }
-  .toggle {
-    position: relative; width: 36px; height: 20px;
-    flex-shrink: 0;
-  }
+  .toggle-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .toggle-row label { margin: 0; cursor: pointer; }
+  .toggle { position: relative; width: 36px; height: 20px; flex-shrink: 0; }
   .toggle input { opacity: 0; width: 0; height: 0; }
   .toggle-slider {
     position: absolute; inset: 0;
-    background: var(--border);
-    border-radius: 10px;
-    cursor: pointer;
-    transition: 0.2s;
+    background: var(--border); border-radius: 10px; cursor: pointer; transition: .2s;
   }
   .toggle-slider::before {
     content: ''; position: absolute;
-    width: 14px; height: 14px;
-    left: 3px; top: 3px;
-    background: #fff;
-    border-radius: 50%;
-    transition: 0.2s;
+    width: 14px; height: 14px; left: 3px; top: 3px;
+    background: #fff; border-radius: 50%; transition: .2s;
   }
   .toggle input:checked + .toggle-slider { background: var(--accent); }
   .toggle input:checked + .toggle-slider::before { transform: translateX(16px); }
 
-  /* Buttons */
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 12px 24px;
-    border: none;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s;
-    text-decoration: none;
-  }
-  .btn-primary {
-    background: var(--accent);
-    color: #000;
-    width: 100%;
-    font-size: 16px;
-    padding: 14px;
-    border-radius: 10px;
-    letter-spacing: 0.3px;
-  }
-  .btn-primary:hover { background: var(--accent2); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(245,197,24,0.3); }
-  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
-  .btn-download {
-    background: var(--green);
-    color: #000;
-    font-size: 15px;
-    padding: 12px 28px;
-    border-radius: 10px;
-  }
-  .btn-download:hover { opacity: 0.9; transform: translateY(-1px); }
-  .btn-reset {
-    background: transparent;
-    color: var(--muted);
-    border: 1px solid var(--border);
-    padding: 12px 20px;
-    border-radius: 10px;
-    font-size: 13px;
-  }
-  .btn-reset:hover { border-color: var(--text); color: var(--text); }
-
-  /* Progress */
-  #progressSection {
-    display: none;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px;
-  }
-  .progress-header {
-    display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
-  }
-  .spinner {
-    width: 20px; height: 20px;
-    border: 3px solid var(--border);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .progress-bar-wrap {
-    background: var(--border);
-    border-radius: 4px;
-    height: 8px;
-    overflow: hidden;
-    margin-bottom: 8px;
-  }
-  .progress-bar {
-    height: 100%;
-    background: linear-gradient(90deg, var(--accent), var(--accent2));
-    border-radius: 4px;
-    transition: width 0.4s ease;
-    width: 0%;
-  }
-  .progress-msg { font-size: 12px; color: var(--muted); }
-
-  /* Result */
-  #resultSection {
-    display: none;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px;
-  }
-  .result-header {
-    display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
-  }
-  .result-icon { font-size: 24px; }
-  .result-title { font-size: 15px; font-weight: 700; color: var(--green); }
-  .result-meta  { font-size: 12px; color: var(--muted); margin-top: 2px; }
-  video {
-    width: 100%;
-    border-radius: 8px;
-    background: #000;
-    margin-bottom: 14px;
-    max-height: 400px;
-  }
-  .result-actions { display: flex; gap: 10px; flex-wrap: wrap; }
-
-  /* Error */
-  .error-box {
-    background: rgba(239,68,68,0.1);
-    border: 1px solid rgba(239,68,68,0.3);
-    border-radius: 8px;
-    padding: 12px 16px;
-    color: var(--red);
-    font-size: 13px;
-    display: none;
-  }
-  pre.err-log {
-    margin-top: 8px;
-    font-size: 10px;
-    color: var(--muted);
-    white-space: pre-wrap;
-    max-height: 120px;
-    overflow-y: auto;
-    background: #0d0f14;
-    border-radius: 6px;
-    padding: 8px;
-  }
-
-  .divider { height: 1px; background: var(--border); margin: 14px 0; }
-
-  .tip {
-    font-size: 11px;
-    color: var(--muted);
-    display: flex;
-    align-items: flex-start;
-    gap: 6px;
-    margin-top: 8px;
-  }
-
-  .char-count { font-size: 11px; color: var(--muted); text-align: right; margin-top: 4px; }
-
-  /* Color swatch picker */
-  .color-swatch {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 26px; height: 26px;
-    border-radius: 6px;
-    border: 2px solid var(--border);
-    cursor: pointer;
-    overflow: hidden;
-    flex-shrink: 0;
-    transition: border-color 0.15s;
-  }
-  .color-swatch:hover { border-color: var(--accent); }
-  .color-swatch input[type=color] {
-    width: 200%; height: 200%;
-    margin: -50%; border: none; padding: 0; cursor: pointer;
-    background: none;
-  }
-
-  /* Transition select */
-  .select-row {
-    display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
-  }
-  .select-row label { width: 160px; margin: 0; flex-shrink: 0; color: var(--muted); font-size: 12px; }
-  .select-row select {
-    flex: 1;
-    background: #0d0f14;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    color: var(--text);
-    font-size: 12px;
-    padding: 6px 10px;
-    outline: none;
-    cursor: pointer;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b7694'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    padding-right: 28px;
-  }
-  .select-row select:focus { border-color: var(--accent); }
-
-  /* Tabs for settings */
-  .tabs { display: flex; gap: 4px; margin-bottom: 14px; }
-  .tab-btn {
-    flex: 1; padding: 7px; border: 1px solid var(--border);
-    background: transparent; color: var(--muted);
-    border-radius: 7px; font-size: 12px; cursor: pointer; font-weight: 600;
-    transition: all 0.15s;
-  }
-  .tab-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
-
-  .tab-pane { display: none; }
-  .tab-pane.active { display: block; }
-
-  /* Multi-video list */
-  .video-add-zone {
+  /* Drop zone for music */
+  .drop-zone {
     border: 2px dashed var(--border);
     border-radius: 10px;
-    padding: 14px 16px;
+    padding: 20px 16px;
     text-align: center;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all .2s;
     position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
   }
-  .video-add-zone:hover, .video-add-zone.drag-over {
-    border-color: var(--accent);
-    background: rgba(245, 197, 24, 0.05);
-  }
-  .video-add-zone input[type=file] {
-    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
-  }
-  .video-add-zone .add-icon { font-size: 20px; }
-  .video-add-zone .add-label { font-size: 13px; font-weight: 600; color: var(--text); }
-  .video-add-zone .add-hint  { font-size: 11px; color: var(--muted); }
+  .drop-zone:hover, .drop-zone.drag-over { border-color: var(--accent); background: rgba(245,197,24,.05); }
+  .drop-zone.has-file { border-color: var(--green); background: rgba(34,197,94,.05); }
+  .drop-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .drop-icon { font-size: 28px; }
+  .drop-label { font-size: 12px; font-weight: 600; }
+  .drop-hint  { font-size: 11px; color: var(--muted); }
 
-  .video-list { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+  /* Color picker */
+  .color-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .color-row label { flex: 1; margin: 0; }
+  .color-row input[type=color] { width: 40px; height: 32px; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; background: transparent; padding: 2px; }
 
-  .video-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: #0d0f14;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 8px 12px;
-    cursor: grab;
-    transition: border-color 0.15s, opacity 0.15s;
-    user-select: none;
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 10px 18px; border: none; border-radius: 8px;
+    font-size: 13px; font-weight: 700; cursor: pointer; transition: all .2s;
   }
-  .video-item:active { cursor: grabbing; }
-  .video-item.drag-target { border-color: var(--accent); background: rgba(245,197,24,0.06); }
-  .video-item.dragging { opacity: 0.4; }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .btn-accent  { background: var(--accent); color: #000; }
+  .btn-accent:not(:disabled):hover  { background: var(--accent2); transform: translateY(-1px); }
+  .btn-green   { background: var(--green);  color: #000; }
+  .btn-green:not(:disabled):hover   { opacity: .9; transform: translateY(-1px); }
+  .btn-ghost   { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+  .btn-ghost:not(:disabled):hover   { border-color: var(--text); color: var(--text); }
+  .btn-blue    { background: var(--blue);   color: #fff; }
+  .btn-blue:not(:disabled):hover    { opacity: .9; transform: translateY(-1px); }
+  .btn-primary {
+    width: 100%; padding: 14px; border-radius: 10px;
+    font-size: 16px; letter-spacing: .3px;
+    background: var(--accent); color: #000; border: none;
+    font-weight: 700; cursor: pointer; transition: all .2s;
+    box-shadow: 0 4px 20px rgba(245,197,24,.2);
+  }
+  .btn-primary:not(:disabled):hover { background: var(--accent2); transform: translateY(-1px); box-shadow: 0 6px 24px rgba(245,197,24,.35); }
+  .btn-primary:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
 
-  .vi-num {
-    font-size: 11px; font-weight: 700;
-    background: var(--border); color: var(--muted);
-    border-radius: 50%; width: 22px; height: 22px;
+  /* Video count selector */
+  .count-row { display: flex; align-items: center; gap: 12px; }
+  .count-display {
+    background: var(--accent);
+    color: #000;
+    font-size: 20px;
+    font-weight: 800;
+    width: 48px; height: 48px;
+    border-radius: 10px;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
   }
-  .vi-name {
-    flex: 1; font-size: 12px; color: var(--text);
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  }
-  .vi-size { font-size: 11px; color: var(--muted); flex-shrink: 0; }
+  .count-row input[type=range] { flex: 1; }
 
-  .vi-actions { display: flex; gap: 4px; flex-shrink: 0; }
-  .vi-btn {
-    background: var(--border); border: none; color: var(--muted);
-    border-radius: 5px; width: 26px; height: 26px;
-    font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center;
-    transition: background 0.15s, color 0.15s;
+  /* Content table */
+  .content-table-wrapper {
+    overflow-x: auto;
+    margin-top: 4px;
   }
-  .vi-btn:hover { background: var(--accent); color: #000; }
-  .vi-btn.remove:hover { background: var(--red); color: #fff; }
+  .content-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .content-table th {
+    background: #0d0f14;
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    padding: 8px 10px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .content-table td {
+    padding: 6px 8px;
+    border-bottom: 1px solid rgba(37,45,58,.5);
+    vertical-align: middle;
+  }
+  .content-table .row-num {
+    color: var(--muted);
+    font-size: 11px;
+    text-align: center;
+    width: 32px;
+  }
+  .content-input {
+    width: 100%;
+    background: #0d0f14;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 13px;
+    padding: 6px 9px;
+    outline: none;
+    transition: border-color .15s;
+  }
+  .content-input:focus { border-color: var(--accent); }
+  .content-table tr:hover .content-input { border-color: var(--border); }
+  .btn-del {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    line-height: 1;
+  }
+  .btn-del:hover { color: var(--red); background: rgba(239,68,68,.1); }
 
-  .video-count-badge {
-    margin-left: auto;
-    background: var(--accent); color: #000;
-    font-size: 11px; font-weight: 700;
-    padding: 2px 8px; border-radius: 12px;
+  /* Preview phone */
+  .phone-wrap {
+    display: flex;
+    justify-content: center;
+    margin-top: 6px;
   }
+  .phone {
+    width: 160px;
+    height: 284px;
+    background: #000;
+    border-radius: 18px;
+    position: relative;
+    overflow: hidden;
+    border: 2px solid var(--border);
+    box-shadow: 0 8px 32px rgba(0,0,0,.5);
+  }
+  .phone-overlay {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,.45);
+  }
+  .phone-text {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    padding: 0 10px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  .phone-title {
+    font-size: 11px;
+    font-weight: 800;
+    color: #fff;
+    text-shadow: 1px 1px 4px rgba(0,0,0,.9);
+    line-height: 1.4;
+    text-transform: uppercase;
+    white-space: pre-line;
+  }
+  .phone-sub {
+    font-size: 9px;
+    font-style: italic;
+    color: #f5c518;
+    text-shadow: 1px 1px 3px rgba(0,0,0,.9);
+    margin-top: 4px;
+  }
+
+  /* Progress section */
+  #progressSection { display: none; }
+
+  .progress-bar-wrap {
+    background: var(--bg);
+    border-radius: 99px;
+    height: 8px;
+    margin: 8px 0 4px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 99px;
+    transition: width .4s ease;
+    width: 0%;
+  }
+  .progress-summary {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  .progress-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 10px;
+  }
+  .progress-item {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+  }
+  .progress-item.done    { border-color: rgba(34,197,94,.4); }
+  .progress-item.error   { border-color: rgba(239,68,68,.4); }
+  .progress-item.processing { border-color: rgba(245,197,24,.3); }
+
+  .pi-num  { font-size: 10px; color: var(--muted); margin-bottom: 4px; }
+  .pi-title { font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 2px; line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pi-sub  { font-size: 11px; color: var(--muted); margin-bottom: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pi-status { font-size: 11px; margin-bottom: 8px; }
+  .pi-status.ok   { color: var(--green); }
+  .pi-status.fail { color: var(--red); }
+  .pi-status.spin { color: var(--accent); }
+  .pi-status.wait { color: var(--muted); }
+  .pi-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .pi-actions .btn { padding: 6px 12px; font-size: 11px; }
+
+  /* Spinner */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spin-icon { display: inline-block; animation: spin 1s linear infinite; }
+
+  /* Modal */
+  .modal-backdrop {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.85);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    width: min(540px, 95vw);
+  }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .modal-title  { font-size: 14px; font-weight: 700; color: var(--accent); }
+  .modal-close  { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 20px; padding: 0 4px; }
+  .modal video  { width: 100%; border-radius: 10px; max-height: 70vh; background: #000; }
+
+  /* Separator */
+  .sep { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+
+  .hint { font-size: 11px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+  .hint a { color: var(--accent); text-decoration: none; }
+
+  /* Section spacing */
+  .mb { margin-bottom: 14px; }
 </style>
 </head>
-
 <body>
 
 <header>
   <div class="logo">🎬</div>
   <div class="header-text">
-    <h1>AUTO VIDEO CREATOR</h1>
-    <p>Source video + Overlay đen + Text tiếng Việt + Nhạc nền → Xuất MP4 tự động</p>
+    <h1>Auto Video Creator</h1>
+    <p>Google Drive → AI Content → Batch MP4</p>
   </div>
-  <span class="badge">v2.0</span>
+  <div class="badge">v3.0</div>
 </header>
 
 <main>
 
-  <!-- ── Cột trái ── -->
-
-  <!-- 1. Upload Video (multi) -->
+  <!-- ── DRIVE CONFIG ────────────────────────────────────────────────── -->
   <div class="card">
-    <div class="card-title">
-      <span class="icon">🎥</span> Video Nguồn
-      <span class="video-count-badge" id="videoCountBadge">0 video</span>
+    <div class="card-title">☁️ Google Drive</div>
+
+    <div class="mb">
+      <label>Folder ID</label>
+      <input type="text" id="driveFolderId" placeholder="1ABCxyz... (từ URL của folder Drive)">
+    </div>
+    <div class="mb">
+      <label>Google API Key</label>
+      <input type="password" id="driveApiKey" placeholder="AIzaSy...">
+    </div>
+    <button class="btn btn-blue" id="btnTestDrive" onclick="testDrive()" style="width:100%">
+      Kiểm tra kết nối
+    </button>
+    <div class="drive-status" id="driveStatus"></div>
+    <p class="hint" style="margin-top:10px">
+      Folder Drive cần được share <strong style="color:var(--text)">"Anyone with the link"</strong>.<br>
+      Tạo API Key tại <a href="https://console.cloud.google.com" target="_blank">Google Cloud Console</a> → enable Drive API.
+    </p>
+  </div>
+
+  <!-- ── VISUAL SETTINGS ────────────────────────────────────────────── -->
+  <div class="card">
+    <div class="card-title">🎨 Hiển thị</div>
+
+    <div class="slider-row">
+      <label>Độ tối overlay</label>
+      <input type="range" id="overlayOpacity" min="0" max="1" step="0.05" value="0.45" oninput="sv(this,'overlayVal');updatePreview()">
+      <span class="slider-val" id="overlayVal">0.45</span>
+    </div>
+    <div class="slider-row">
+      <label>Vị trí text (% từ trên)</label>
+      <input type="range" id="textY" min="20" max="80" step="1" value="52" oninput="sv(this,'textYVal');updatePreview()">
+      <span class="slider-val" id="textYVal">52%</span>
+    </div>
+    <div class="slider-row">
+      <label>Cỡ chữ tiêu đề</label>
+      <input type="range" id="titleFontSize" min="28" max="80" step="2" value="52" oninput="sv(this,'titleFsVal');updatePreview()">
+      <span class="slider-val" id="titleFsVal">52</span>
+    </div>
+    <div class="slider-row">
+      <label>Cỡ chữ phụ đề</label>
+      <input type="range" id="subFontSize" min="20" max="60" step="2" value="38" oninput="sv(this,'subFsVal');updatePreview()">
+      <span class="slider-val" id="subFsVal">38</span>
+    </div>
+    <div class="slider-row">
+      <label>Ký tự tối đa / dòng</label>
+      <input type="range" id="maxChars" min="14" max="36" step="1" value="26" oninput="sv(this,'maxCharsVal')">
+      <span class="slider-val" id="maxCharsVal">26</span>
     </div>
 
-    <!-- Drop zone để thêm video -->
-    <div class="video-add-zone" id="videoAddZone">
-      <input type="file" id="videoInput" accept="video/*" multiple>
-      <span class="add-icon">➕</span>
-      <div>
-        <div class="add-label">Thêm video (kéo thả hoặc click)</div>
-        <div class="add-hint">MP4, MOV, AVI, MKV… — chọn nhiều file cùng lúc</div>
-      </div>
+    <hr class="sep">
+
+    <div class="color-row">
+      <label>Màu tiêu đề</label>
+      <input type="color" id="titleColor" value="#ffffff" oninput="updatePreview()">
     </div>
-
-    <!-- Danh sách video đã thêm -->
-    <div class="video-list" id="videoList"></div>
-
-    <div class="tip" style="margin-top:10px">
-      💡 Các video ghép nối tiếp theo thứ tự, tự động scale về 1080×1920
+    <div class="color-row">
+      <label>Màu phụ đề</label>
+      <input type="color" id="subColor" value="#f5c518" oninput="updatePreview()">
     </div>
   </div>
 
-  <!-- 2. Upload Nhạc -->
+  <!-- ── BATCH SETUP ────────────────────────────────────────────────── -->
   <div class="card">
-    <div class="card-title"><span class="icon">🎵</span> Nhạc Nền (tuỳ chọn)</div>
-    <div class="drop-zone" id="musicZone">
-      <input type="file" id="musicInput" accept="audio/*">
-      <span class="drop-icon">🎶</span>
-      <span class="drop-label">Kéo thả hoặc click chọn nhạc</span>
-      <span class="drop-hint">MP3, WAV, AAC, OGG…</span>
-      <span class="file-name" id="musicName" style="display:none"></span>
+    <div class="card-title">📋 Nội dung</div>
+
+    <div class="mb">
+      <label>Số lượng video</label>
+      <div class="count-row">
+        <div class="count-display" id="countDisplay">5</div>
+        <input type="range" id="videoCount" min="1" max="20" value="5"
+          oninput="document.getElementById('countDisplay').textContent=this.value">
+      </div>
     </div>
-    <div class="divider"></div>
+
+    <div class="mb">
+      <label>Tiêu đề gốc</label>
+      <textarea id="baseTitle" rows="2" placeholder="VD: CÁCH ĐỂ BẮT ĐẦU NGÀY MỚI TRÀN ĐẦY NĂNG LƯỢNG" oninput="updatePreview()"></textarea>
+    </div>
+    <div class="mb">
+      <label>Phụ đề gốc (tuỳ chọn)</label>
+      <input type="text" id="baseSubtitle" placeholder="VD: Bắt đầu từ hôm nay" oninput="updatePreview()">
+    </div>
+
+    <button class="btn btn-blue" id="btnGenerate" onclick="generateContent()" style="width:100%">
+      ✨ Đề xuất nội dung AI
+    </button>
+  </div>
+
+  <!-- ── AUDIO SETTINGS ────────────────────────────────────────────── -->
+  <div class="card">
+    <div class="card-title">🎵 Âm thanh</div>
+
+    <div class="mb">
+      <label>Nhạc nền (tuỳ chọn)</label>
+      <div class="drop-zone" id="musicZone">
+        <input type="file" id="musicFile" accept="audio/*" onchange="onMusicSelect(this)">
+        <div class="drop-icon">🎵</div>
+        <div class="drop-label">Kéo thả hoặc click để chọn nhạc</div>
+        <div class="drop-hint" id="musicFileName">MP3, AAC, WAV · Dùng chung cho tất cả video</div>
+      </div>
+    </div>
+
+    <div class="slider-row">
+      <label>Âm lượng nhạc</label>
+      <input type="range" id="musicVolume" min="0" max="1" step="0.05" value="0.65" oninput="sv(this,'musicVolVal')">
+      <span class="slider-val" id="musicVolVal">0.65</span>
+    </div>
     <div class="toggle-row">
       <label class="toggle">
         <input type="checkbox" id="keepOrigAudio">
         <span class="toggle-slider"></span>
       </label>
-      <label for="keepOrigAudio">Giữ âm thanh gốc của video (trộn với nhạc)</label>
+      <label for="keepOrigAudio">Giữ âm thanh gốc video</label>
     </div>
-  </div>
+    <div class="slider-row" id="origVolRow" style="opacity:.4">
+      <label>Âm lượng gốc</label>
+      <input type="range" id="origVolume" min="0" max="1" step="0.05" value="0.15" oninput="sv(this,'origVolVal')">
+      <span class="slider-val" id="origVolVal">0.15</span>
+    </div>
 
-  <!-- 3. Nội dung Text -->
-  <div class="card full-width">
-    <div class="card-title"><span class="icon">✍️</span> Nội Dung Text</div>
+    <hr class="sep">
 
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px">
-      <!-- Title -->
-      <div>
-        <label style="display:flex;align-items:center;gap:8px">
-          <span>TIÊU ĐỀ (bold) — Enter để xuống dòng</span>
-          <label class="color-swatch" title="Màu tiêu đề">
-            <input type="color" id="titleColor" value="#ffffff">
-          </label>
-        </label>
-        <textarea id="titleText" placeholder="Nhập tiêu đề video...&#10;Dùng Enter để xuống dòng thủ công&#10;Ví dụ:&#10;KỶ LUẬT KHÔNG PHẢI LÀ TỰ TƯỚC ĐI TỰ DO&#10;MÀ LÀ CÁCH DUY NHẤT ĐỂ NGƯỜI&#10;ĐÀN ÔNG LÀM CHỦ CUỘC ĐỜI MÌNH" rows="5"></textarea>
-        <div class="char-count" id="titleCount">0 ký tự</div>
-
-        <div class="toggle-row" style="margin-top:8px">
-          <label class="toggle">
-            <input type="checkbox" id="autoWrap" checked>
-            <span class="toggle-slider"></span>
-          </label>
-          <label for="autoWrap">Tự động xuống dòng (auto-wrap)</label>
+    <!-- Preview -->
+    <div class="card-title" style="margin-top:4px">👁️ Xem trước</div>
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="phone-overlay" id="previewOverlay"></div>
+        <div class="phone-text">
+          <div class="phone-title" id="previewTitle">TIÊU ĐỀ VIDEO</div>
+          <div class="phone-sub"   id="previewSub">(Phụ đề)</div>
         </div>
       </div>
-
-      <!-- Subtitle -->
-      <div>
-        <label style="display:flex;align-items:center;gap:8px">
-          <span>PHỤ ĐỀ (italic) — tự động thêm ngoặc ()</span>
-          <label class="color-swatch" title="Màu phụ đề">
-            <input type="color" id="subColor" value="#ffff00">
-          </label>
-        </label>
-        <textarea id="subtitleText" placeholder="xem xong bạn sẽ muốn thay đổi ngay" rows="3" style="font-style:italic;color:#ffff00"></textarea>
-
-        <!-- Preview text -->
-        <div class="preview-text" id="textPreview">
-          <span class="preview-title" id="prevTitle">—</span>
-          <span class="preview-subtitle" id="prevSub" style="display:none"></span>
-        </div>
-        <div class="tip" style="margin-top:6px">👀 Preview text (chưa có overlay)</div>
-      </div>
     </div>
   </div>
 
-  <!-- 4. Cài đặt video / âm thanh -->
-  <div class="card">
-    <div class="card-title"><span class="icon">⚙️</span> Cài Đặt</div>
-
-    <div class="tabs">
-      <button class="tab-btn active" data-tab="visual">🎨 Hình ảnh</button>
-      <button class="tab-btn" data-tab="text">📝 Text</button>
-      <button class="tab-btn" data-tab="audio">🔊 Âm thanh</button>
+  <!-- ── CONTENT TABLE ──────────────────────────────────────────────── -->
+  <div class="card full-width" id="contentTableCard" style="display:none">
+    <div class="card-title" style="justify-content:space-between">
+      <span>📝 Danh sách nội dung</span>
+      <button class="btn btn-ghost" onclick="addRow()" style="padding:4px 12px;font-size:12px">+ Thêm dòng</button>
     </div>
-
-    <!-- Visual tab -->
-    <div class="tab-pane active" id="tab-visual">
-      <div class="slider-row">
-        <label>Độ tối overlay</label>
-        <input type="range" id="overlayOpacity" min="0" max="0.9" step="0.05" value="0.45">
-        <span class="slider-val" id="overlayVal">45%</span>
-      </div>
-      <div class="tip" style="margin-bottom:14px">⬆️ Tăng để chữ dễ đọc hơn, giảm để thấy rõ video hơn</div>
-
-      <div class="divider"></div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;margin-top:10px">
-        ✨ Hiệu ứng chuyển cảnh (khi có nhiều video)
-      </div>
-
-      <div class="select-row">
-        <label>Loại hiệu ứng</label>
-        <select id="transitionEffect">
-          <option value="none">— Không có (cắt thẳng)</option>
-          <option value="fade">Fade (mờ dần)</option>
-          <option value="fadeblack">Fade qua đen</option>
-          <option value="dissolve">Dissolve (hoà tan)</option>
-          <option value="wipeleft">Wipe trái →</option>
-          <option value="wiperight">Wipe phải ←</option>
-          <option value="wipeup">Wipe lên ↑</option>
-          <option value="wipedown">Wipe xuống ↓</option>
-          <option value="slideleft">Slide trái</option>
-          <option value="slideright">Slide phải</option>
-          <option value="smoothleft">Smooth trái</option>
-          <option value="smoothright">Smooth phải</option>
-          <option value="circleopen">Mở hình tròn</option>
-          <option value="circleclose">Đóng hình tròn</option>
-          <option value="pixelize">Pixel hoá</option>
-          <option value="radial">Xoay tròn</option>
-        </select>
-      </div>
-      <div class="slider-row">
-        <label>Thời gian chuyển cảnh</label>
-        <input type="range" id="transitionDuration" min="0.2" max="1.5" step="0.1" value="0.5">
-        <span class="slider-val" id="transitionDurVal">0.5s</span>
-      </div>
+    <div class="content-table-wrapper">
+      <table class="content-table">
+        <thead>
+          <tr>
+            <th style="width:36px">#</th>
+            <th>Tiêu đề</th>
+            <th style="width:35%">Phụ đề</th>
+            <th style="width:36px"></th>
+          </tr>
+        </thead>
+        <tbody id="contentTableBody"></tbody>
+      </table>
     </div>
-
-    <!-- Text tab -->
-    <div class="tab-pane" id="tab-text">
-      <div class="slider-row">
-        <label>Vị trí dọc text</label>
-        <input type="range" id="textY" min="30" max="80" step="1" value="52">
-        <span class="slider-val" id="textYVal">52%</span>
-      </div>
-      <div class="slider-row">
-        <label>Cỡ chữ tiêu đề</label>
-        <input type="range" id="titleFontSize" min="28" max="80" step="2" value="46">
-        <span class="slider-val" id="titleFontVal">46px</span>
-      </div>
-      <div class="slider-row">
-        <label>Cỡ chữ phụ đề</label>
-        <input type="range" id="subFontSize" min="20" max="60" step="2" value="38">
-        <span class="slider-val" id="subFontVal">38px</span>
-      </div>
-      <div class="slider-row">
-        <label>Ký tự/dòng (auto-wrap)</label>
-        <input type="range" id="maxChars" min="10" max="40" step="1" value="20">
-        <span class="slider-val" id="maxCharsVal">20</span>
-      </div>
-    </div>
-
-    <!-- Audio tab -->
-    <div class="tab-pane" id="tab-audio">
-      <div class="slider-row">
-        <label>Âm lượng nhạc nền</label>
-        <input type="range" id="musicVolume" min="0" max="1" step="0.05" value="0.65">
-        <span class="slider-val" id="musicVolumeVal">65%</span>
-      </div>
-      <div class="slider-row">
-        <label>Âm lượng tiếng gốc</label>
-        <input type="range" id="origVolume" min="0" max="1" step="0.05" value="0.15">
-        <span class="slider-val" id="origVolumeVal">15%</span>
-      </div>
-      <div class="tip">🎵 Nhạc sẽ loop tự động nếu ngắn hơn video</div>
-    </div>
+    <p class="hint" style="margin-top:10px">Mỗi video sẽ dùng 1 video ngẫu nhiên từ Drive folder. Chỉnh sửa nội dung tuỳ ý trước khi tạo.</p>
   </div>
 
-  <!-- 5. Batch info + Process button -->
-  <div class="card">
-    <div class="card-title"><span class="icon">🚀</span> Xuất Video</div>
-
-    <p style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.6">
-      Pipeline: <strong style="color:var(--text)">Video nguồn</strong> →
-      <strong style="color:var(--text)">Scale 1080×1920</strong> →
-      <strong style="color:var(--text)">Overlay đen</strong> →
-      <strong style="color:var(--text)">Thêm text</strong> →
-      <strong style="color:var(--text)">Ghép nhạc</strong> →
-      <strong style="color:var(--accent)">Output MP4</strong>
-    </p>
-
-    <button class="btn btn-primary" id="processBtn" onclick="startProcess()">
-      ⚡ TẠO VIDEO
+  <!-- ── CREATE BUTTON ──────────────────────────────────────────────── -->
+  <div class="full-width">
+    <button class="btn-primary" id="btnStart" onclick="startBatch()" disabled>
+      🚀 Tạo video
     </button>
+  </div>
 
-    <div class="divider"></div>
-
-    <!-- Progress -->
-    <div id="progressSection">
-      <div class="progress-header">
-        <div class="spinner" id="spinner"></div>
-        <span style="font-size:13px;font-weight:600">Đang xử lý video...</span>
-      </div>
-      <div class="progress-bar-wrap">
-        <div class="progress-bar" id="progressBar"></div>
-      </div>
-      <div class="progress-msg" id="progressMsg">Đang chuẩn bị...</div>
+  <!-- ── PROGRESS ───────────────────────────────────────────────────── -->
+  <div class="card full-width" id="progressSection">
+    <div class="card-title" style="justify-content:space-between">
+      <span>⏳ Tiến trình</span>
+      <button class="btn btn-green" id="btnDownloadAll" style="display:none;padding:6px 14px;font-size:12px" onclick="downloadAll()">
+        ⬇ Tải tất cả
+      </button>
     </div>
-
-    <!-- Error -->
-    <div class="error-box" id="errorBox">
-      <strong>❌ Lỗi:</strong> <span id="errorMsg"></span>
-      <pre class="err-log" id="errLog" style="display:none"></pre>
-    </div>
-
-    <!-- Result -->
-    <div id="resultSection">
-      <div class="result-header">
-        <span class="result-icon">✅</span>
-        <div>
-          <div class="result-title">Video đã hoàn thành!</div>
-          <div class="result-meta" id="resultMeta"></div>
-        </div>
-      </div>
-      <video id="previewVideo" controls playsinline></video>
-      <div class="result-actions">
-        <a class="btn btn-download" id="downloadBtn" href="#" download>⬇️ Tải về MP4</a>
-        <button class="btn btn-reset" onclick="resetForm()">🔄 Tạo video mới</button>
-      </div>
-    </div>
+    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressBarFill"></div></div>
+    <div class="progress-summary" id="progressSummary">Đang khởi động...</div>
+    <div class="progress-grid" id="progressGrid"></div>
   </div>
 
 </main>
 
+<!-- Preview modal -->
+<div class="modal-backdrop" id="previewModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle">Xem trước video</span>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <video id="modalVideo" controls playsinline></video>
+  </div>
+</div>
+
 <script>
-// ── Multi-video management ────────────────────────────────────────────────────
+const API_BASE = window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:3000';
 
-let videoFiles = []; // File[] — ordered list of source videos
-let dragSrcIdx = null;
+// ── State ────────────────────────────────────────────────────────────────────
+const S = {
+  driveConnected: false,
+  folderId: '',
+  apiKey: '',
+  contentRows: [],    // [{title, subtitle}]
+  currentBatch: null, // batch payload for status updates
+};
 
-const videoInput   = document.getElementById('videoInput');
-const videoAddZone = document.getElementById('videoAddZone');
-const videoList    = document.getElementById('videoList');
-const videoCountBadge = document.getElementById('videoCountBadge');
+// ── Init ─────────────────────────────────────────────────────────────────────
+function init() {
+  const fid = localStorage.getItem('driveFolderId') || '';
+  const ak  = localStorage.getItem('driveApiKey')   || '';
+  if (fid) document.getElementById('driveFolderId').value = fid;
+  if (ak)  document.getElementById('driveApiKey').value   = ak;
 
-function addVideos(files) {
-  for (const f of files) {
-    if (f.type.startsWith('video/') || /\.(mp4|mov|avi|mkv|webm|m4v|flv)$/i.test(f.name)) {
-      videoFiles.push(f);
+  document.getElementById('keepOrigAudio').addEventListener('change', function() {
+    document.getElementById('origVolRow').style.opacity = this.checked ? '1' : '.4';
+  });
+
+  // Music drop zone drag events
+  const mz = document.getElementById('musicZone');
+  mz.addEventListener('dragover', e => { e.preventDefault(); mz.classList.add('drag-over'); });
+  mz.addEventListener('dragleave', () => mz.classList.remove('drag-over'));
+  mz.addEventListener('drop', e => { e.preventDefault(); mz.classList.remove('drag-over'); const f = e.dataTransfer.files[0]; if (f) setMusicFile(f); });
+
+  updatePreview();
+}
+
+// ── Drive ─────────────────────────────────────────────────────────────────────
+async function testDrive() {
+  const fid = document.getElementById('driveFolderId').value.trim();
+  const ak  = document.getElementById('driveApiKey').value.trim();
+  if (!fid || !ak) return showDriveStatus('Vui lòng nhập Folder ID và API Key', false);
+
+  const btn = document.getElementById('btnTestDrive');
+  btn.disabled = true; btn.textContent = '⏳ Đang kiểm tra...';
+
+  try {
+    const res  = await fetch(`${API_BASE}/api/drive/list?folderId=${encodeURIComponent(fid)}&apiKey=${encodeURIComponent(ak)}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    S.driveConnected = true; S.folderId = fid; S.apiKey = ak;
+    localStorage.setItem('driveFolderId', fid);
+    localStorage.setItem('driveApiKey',   ak);
+    showDriveStatus(`✓ Kết nối thành công — tìm thấy ${data.count} video`, true);
+    updateStartBtn();
+  } catch (e) {
+    S.driveConnected = false;
+    showDriveStatus('✗ ' + e.message, false);
+    updateStartBtn();
+  } finally {
+    btn.disabled = false; btn.textContent = 'Kiểm tra kết nối';
+  }
+}
+
+function showDriveStatus(msg, ok) {
+  const el = document.getElementById('driveStatus');
+  el.textContent = msg;
+  el.className = 'drive-status ' + (ok ? 'success' : 'error');
+  el.style.display = 'block';
+}
+
+// ── AI Content Generation ─────────────────────────────────────────────────────
+async function generateContent() {
+  const baseTitle    = document.getElementById('baseTitle').value.trim();
+  const baseSubtitle = document.getElementById('baseSubtitle').value.trim();
+  const count        = parseInt(document.getElementById('videoCount').value) || 5;
+  if (!baseTitle) return alert('Vui lòng nhập tiêu đề gốc trước');
+
+  const btn = document.getElementById('btnGenerate');
+  btn.disabled = true; btn.textContent = '⏳ Đang tạo nội dung...';
+
+  try {
+    const res  = await fetch(`${API_BASE}/api/content/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ baseTitle, baseSubtitle, count }),
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    S.contentRows = data.variations;
+    renderTable();
+    document.getElementById('contentTableCard').style.display = 'block';
+    document.getElementById('contentTableCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    updateStartBtn();
+  } catch (e) {
+    alert('Lỗi tạo nội dung: ' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = '✨ Đề xuất nội dung AI';
+  }
+}
+
+// ── Content Table ─────────────────────────────────────────────────────────────
+function renderTable() {
+  const tbody = document.getElementById('contentTableBody');
+  tbody.innerHTML = '';
+  S.contentRows.forEach((row, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="row-num">${i + 1}</td>
+      <td><input class="content-input" type="text" value="${esc(row.title)}"    oninput="S.contentRows[${i}].title=this.value;updateStartBtn()"></td>
+      <td><input class="content-input" type="text" value="${esc(row.subtitle||'')}" oninput="S.contentRows[${i}].subtitle=this.value"></td>
+      <td><button class="btn-del" onclick="removeRow(${i})" title="Xóa">×</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+  updateStartBtn();
+}
+
+function removeRow(i) {
+  S.contentRows.splice(i, 1);
+  renderTable();
+}
+
+function addRow() {
+  S.contentRows.push({ title: '', subtitle: '' });
+  renderTable();
+  // Focus the new title input
+  const rows = document.querySelectorAll('#contentTableBody tr');
+  if (rows.length) rows[rows.length - 1].querySelector('.content-input')?.focus();
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Music ─────────────────────────────────────────────────────────────────────
+function onMusicSelect(input) { if (input.files[0]) setMusicFile(input.files[0]); }
+function setMusicFile(file) {
+  document.getElementById('musicZone').classList.add('has-file');
+  document.getElementById('musicFileName').textContent = file.name;
+}
+
+// ── Preview ───────────────────────────────────────────────────────────────────
+function updatePreview() {
+  const title    = document.getElementById('baseTitle').value || 'TIÊU ĐỀ VIDEO';
+  const sub      = document.getElementById('baseSubtitle').value || '';
+  const opacity  = parseFloat(document.getElementById('overlayOpacity').value);
+  const tc       = document.getElementById('titleColor').value;
+  const sc       = document.getElementById('subColor').value;
+  const textY    = document.getElementById('textY').value;
+
+  document.getElementById('previewOverlay').style.background = `rgba(0,0,0,${opacity * 0.75})`;
+  document.getElementById('previewTitle').style.color  = tc;
+  document.getElementById('previewTitle').textContent  = title.toUpperCase();
+  document.getElementById('previewSub').style.color    = sc;
+  document.getElementById('previewSub').textContent    = sub ? `(${sub})` : '';
+  document.getElementById('previewSub').style.display  = sub ? 'block' : 'none';
+  document.querySelector('.phone-text').style.top      = textY + '%';
+}
+
+// ── Slider helper ─────────────────────────────────────────────────────────────
+function sv(el, valId) {
+  const v = parseFloat(el.value);
+  document.getElementById(valId).textContent = el.id === 'textY' ? v + '%' : v;
+}
+
+// ── Batch Start ───────────────────────────────────────────────────────────────
+async function startBatch() {
+  if (!S.driveConnected) return alert('Vui lòng kết nối Google Drive trước');
+  const validItems = S.contentRows.filter(r => r.title?.trim());
+  if (!validItems.length) return alert('Cần có ít nhất 1 video với tiêu đề');
+
+  const fd = new FormData();
+  fd.append('folderId', S.folderId);
+  fd.append('apiKey',   S.apiKey);
+  fd.append('items',    JSON.stringify(validItems));
+
+  const musicFile = document.getElementById('musicFile').files[0];
+  if (musicFile) fd.append('music', musicFile);
+
+  fd.append('overlayOpacity', document.getElementById('overlayOpacity').value);
+  fd.append('textY',          document.getElementById('textY').value);
+  fd.append('titleFontSize',  document.getElementById('titleFontSize').value);
+  fd.append('subFontSize',    document.getElementById('subFontSize').value);
+  fd.append('titleColor',     document.getElementById('titleColor').value);
+  fd.append('subColor',       document.getElementById('subColor').value);
+  fd.append('keepOrigAudio',  document.getElementById('keepOrigAudio').checked);
+  fd.append('musicVolume',    document.getElementById('musicVolume').value);
+  fd.append('origVolume',     document.getElementById('origVolume').value);
+  fd.append('maxChars',       document.getElementById('maxChars').value);
+
+  const btn = document.getElementById('btnStart');
+  btn.disabled = true; btn.textContent = '⏳ Đang tạo...';
+
+  try {
+    const res  = await fetch(`${API_BASE}/api/batch`, { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    initProgressUI(validItems);
+    listenBatch(data.batchId);
+  } catch (e) {
+    alert('Lỗi: ' + e.message);
+    btn.disabled = false; btn.textContent = '🚀 Tạo video';
+  }
+}
+
+// ── Progress UI ───────────────────────────────────────────────────────────────
+function initProgressUI(items) {
+  const sec  = document.getElementById('progressSection');
+  const grid = document.getElementById('progressGrid');
+  sec.style.display = 'block';
+  sec.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  grid.innerHTML = items.map((it, i) => `
+    <div class="progress-item" id="pi_${i}">
+      <div class="pi-num">Video ${i + 1}</div>
+      <div class="pi-title" title="${esc(it.title)}">${esc(it.title)}</div>
+      <div class="pi-sub">${esc(it.subtitle || '—')}</div>
+      <div class="pi-status wait" id="pi_status_${i}">⏸ Chờ xử lý...</div>
+      <div class="pi-actions" id="pi_actions_${i}"></div>
+    </div>
+  `).join('');
+
+  document.getElementById('progressBarFill').style.width = '0%';
+  document.getElementById('progressSummary').textContent = `0/${items.length} video hoàn thành`;
+  document.getElementById('btnDownloadAll').style.display = 'none';
+}
+
+function updateProgressUI(data) {
+  const pct = data.total ? Math.round((data.done / data.total) * 100) : 0;
+  document.getElementById('progressBarFill').style.width = pct + '%';
+  document.getElementById('progressSummary').textContent = `${data.done}/${data.total} video hoàn thành`;
+
+  data.items.forEach((item, i) => {
+    const card    = document.getElementById(`pi_${i}`);
+    const statusEl = document.getElementById(`pi_status_${i}`);
+    const actionsEl = document.getElementById(`pi_actions_${i}`);
+    if (!card) return;
+
+    card.className = `progress-item ${item.status}`;
+
+    if (item.status === 'done') {
+      statusEl.className = 'pi-status ok';
+      statusEl.textContent = `✓ Xong · ${item.sizeMB} MB`;
+      actionsEl.innerHTML = `
+        <button class="btn btn-green" onclick="downloadVideo('${item.file}')">⬇ Tải về</button>
+        <button class="btn btn-ghost" onclick="previewVideo('${item.file}', ${i + 1})">▶ Xem</button>
+      `;
+    } else if (item.status === 'processing') {
+      statusEl.className = 'pi-status spin';
+      statusEl.innerHTML = '<span class="spin-icon">⚙</span> Đang xử lý...';
+      actionsEl.innerHTML = '';
+    } else if (item.status === 'error') {
+      statusEl.className = 'pi-status fail';
+      statusEl.textContent = '✗ Lỗi — ' + (item.error || 'không rõ nguyên nhân');
+      actionsEl.innerHTML = '';
+    } else {
+      statusEl.className = 'pi-status wait';
+      statusEl.textContent = '⏸ Chờ xử lý...';
+    }
+  });
+
+  if (data.status !== 'processing') {
+    const btn = document.getElementById('btnStart');
+    btn.disabled = false; btn.textContent = '🚀 Tạo video mới';
+
+    if (data.done > 0) {
+      document.getElementById('btnDownloadAll').style.display = 'inline-flex';
     }
   }
-  renderVideoList();
 }
 
-function removeVideo(i) {
-  videoFiles.splice(i, 1);
-  renderVideoList();
+function listenBatch(batchId) {
+  S.currentBatchId = batchId;
+  const es = new EventSource(`${API_BASE}/api/batch/${batchId}/status`);
+  es.onmessage = e => {
+    const data = JSON.parse(e.data);
+    S.currentBatch = data;
+    updateProgressUI(data);
+    if (data.status !== 'processing') es.close();
+  };
+  es.onerror = () => {
+    es.close();
+    // Fallback polling
+    const iv = setInterval(async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/batch/${batchId}/status`, {
+          headers: { Accept: 'application/json' }
+        });
+        // SSE not available — fallback logic would need a separate JSON endpoint
+        clearInterval(iv);
+      } catch {}
+    }, 3000);
+  };
 }
 
-function moveVideo(i, dir) {
-  const j = i + dir;
-  if (j < 0 || j >= videoFiles.length) return;
-  [videoFiles[i], videoFiles[j]] = [videoFiles[j], videoFiles[i]];
-  renderVideoList();
+// ── Download ──────────────────────────────────────────────────────────────────
+function downloadVideo(filename) {
+  const a = document.createElement('a');
+  a.href = `${API_BASE}/api/download/${filename}`;
+  a.click();
 }
 
-function renderVideoList() {
-  videoCountBadge.textContent = videoFiles.length + ' video';
-  videoList.innerHTML = '';
-
-  videoFiles.forEach((f, i) => {
-    const item = document.createElement('div');
-    item.className = 'video-item';
-    item.draggable = true;
-    item.dataset.idx = i;
-
-    item.innerHTML = `
-      <span class="vi-num">${i + 1}</span>
-      <span class="vi-name" title="${f.name}">${f.name}</span>
-      <span class="vi-size">${(f.size / 1024 / 1024).toFixed(1)} MB</span>
-      <div class="vi-actions">
-        <button class="vi-btn" title="Lên" onclick="moveVideo(${i},-1)">↑</button>
-        <button class="vi-btn" title="Xuống" onclick="moveVideo(${i},1)">↓</button>
-        <button class="vi-btn remove" title="Xóa" onclick="removeVideo(${i})">✕</button>
-      </div>`;
-
-    // Drag-to-reorder
-    item.addEventListener('dragstart', () => { dragSrcIdx = i; item.classList.add('dragging'); });
-    item.addEventListener('dragend',   () => { dragSrcIdx = null; item.classList.remove('dragging'); });
-    item.addEventListener('dragover',  e => { e.preventDefault(); item.classList.add('drag-target'); });
-    item.addEventListener('dragleave', () => item.classList.remove('drag-target'));
-    item.addEventListener('drop', e => {
-      e.preventDefault();
-      item.classList.remove('drag-target');
-      if (dragSrcIdx !== null && dragSrcIdx !== i) {
-        const moved = videoFiles.splice(dragSrcIdx, 1)[0];
-        videoFiles.splice(i, 0, moved);
-        renderVideoList();
-      }
-    });
-
-    videoList.appendChild(item);
-  });
-
-  // Reset input so same file can be re-added
-  videoInput.value = '';
-}
-
-videoInput.addEventListener('change', () => addVideos(Array.from(videoInput.files)));
-
-videoAddZone.addEventListener('dragover', e => { e.preventDefault(); videoAddZone.classList.add('drag-over'); });
-videoAddZone.addEventListener('dragleave', () => videoAddZone.classList.remove('drag-over'));
-videoAddZone.addEventListener('drop', e => {
-  e.preventDefault();
-  videoAddZone.classList.remove('drag-over');
-  addVideos(Array.from(e.dataTransfer.files));
-});
-
-// ── Music drop zone ───────────────────────────────────────────────────────────
-
-function setupDropZone(zoneId, inputId, nameId) {
-  const zone  = document.getElementById(zoneId);
-  const input = document.getElementById(inputId);
-  const name  = document.getElementById(nameId);
-
-  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
-  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
-  zone.addEventListener('drop', e => {
-    e.preventDefault();
-    zone.classList.remove('drag-over');
-    const file = e.dataTransfer.files[0];
-    if (file) setMusicFile(input, name, zone, file);
-  });
-  input.addEventListener('change', () => {
-    if (input.files[0]) setMusicFile(input, name, zone, input.files[0]);
+function downloadAll() {
+  if (!S.currentBatch) return;
+  const done = S.currentBatch.items.filter(i => i.status === 'done');
+  done.forEach((item, idx) => {
+    setTimeout(() => {
+      const a = document.createElement('a');
+      a.href = `${API_BASE}/api/download/${item.file}`;
+      a.click();
+    }, idx * 800);
   });
 }
 
-function setMusicFile(input, nameEl, zone, file) {
-  const dt = new DataTransfer();
-  dt.items.add(file);
-  input.files = dt.files;
-  nameEl.textContent = `✅ ${file.name} (${(file.size/1024/1024).toFixed(1)} MB)`;
-  nameEl.style.display = 'block';
-  zone.classList.add('has-file');
+// ── Preview Modal ─────────────────────────────────────────────────────────────
+function previewVideo(filename, num) {
+  document.getElementById('modalTitle').textContent = `Video ${num}`;
+  const v = document.getElementById('modalVideo');
+  v.src = `${API_BASE}/api/preview/${filename}`;
+  v.load(); v.play();
+  document.getElementById('previewModal').classList.add('open');
 }
 
-setupDropZone('musicZone', 'musicInput', 'musicName');
-
-// ── Tabs ──────────────────────────────────────────────────────────────────────
-
-document.querySelectorAll('.tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const tab = btn.dataset.tab;
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('tab-' + tab).classList.add('active');
-  });
-});
-
-// ── Sliders ───────────────────────────────────────────────────────────────────
-
-function bindSlider(id, valId, fmt) {
-  const el  = document.getElementById(id);
-  const val = document.getElementById(valId);
-  const update = () => { val.textContent = fmt(parseFloat(el.value)); };
-  el.addEventListener('input', update);
-  update();
+function closeModal() {
+  document.getElementById('previewModal').classList.remove('open');
+  const v = document.getElementById('modalVideo');
+  v.pause(); v.src = '';
 }
-
-bindSlider('overlayOpacity',      'overlayVal',       v => Math.round(v * 100) + '%');
-bindSlider('transitionDuration', 'transitionDurVal', v => v.toFixed(1) + 's');
-bindSlider('textY',          'textYVal',       v => Math.round(v) + '%');
-bindSlider('titleFontSize',  'titleFontVal',   v => Math.round(v) + 'px');
-bindSlider('subFontSize',    'subFontVal',     v => Math.round(v) + 'px');
-bindSlider('maxChars',       'maxCharsVal',    v => Math.round(v));
-bindSlider('musicVolume',    'musicVolumeVal', v => Math.round(v * 100) + '%');
-bindSlider('origVolume',     'origVolumeVal',  v => Math.round(v * 100) + '%');
-
-// ── Text preview ──────────────────────────────────────────────────────────────
-
-const titleTA    = document.getElementById('titleText');
-const subTA      = document.getElementById('subtitleText');
-const titleColor = document.getElementById('titleColor');
-const subColor   = document.getElementById('subColor');
-
-function updatePreview() {
-  const title     = titleTA.value.trim().toUpperCase();
-  const sub       = subTA.value.trim();
-  const prevTitle = document.getElementById('prevTitle');
-  const prevSub   = document.getElementById('prevSub');
-
-  prevTitle.textContent = title || '—';
-  prevTitle.style.color = titleColor.value;
-
-  if (sub) {
-    const subText = sub.startsWith('(') ? sub : `(${sub})`;
-    prevSub.textContent = subText;
-    prevSub.style.color = subColor.value;
-    prevSub.style.display = '';
-  } else {
-    prevSub.style.display = 'none';
-  }
-
-  document.getElementById('titleCount').textContent = titleTA.value.length + ' ký tự';
-}
-
-// Sync subtitle textarea color with picker
-subColor.addEventListener('input', () => {
-  subTA.style.color = subColor.value;
-  updatePreview();
-});
-titleColor.addEventListener('input', updatePreview);
-
-titleTA.addEventListener('input', updatePreview);
-subTA.addEventListener('input', updatePreview);
-updatePreview();
+document.getElementById('previewModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
 
 // ── Validation ────────────────────────────────────────────────────────────────
-
-function validate() {
-  if (videoFiles.length === 0) {
-    alert('⚠️ Vui lòng thêm ít nhất 1 video nguồn');
-    return false;
-  }
-  if (!document.getElementById('titleText').value.trim()) {
-    alert('⚠️ Vui lòng nhập nội dung tiêu đề');
-    return false;
-  }
-  return true;
+function updateStartBtn() {
+  const hasRows = S.contentRows.some(r => r.title?.trim());
+  document.getElementById('btnStart').disabled = !S.driveConnected || !hasRows;
 }
 
-// ── API base URL ──────────────────────────────────────────────────────────────
-// Dùng window.location.origin để hoạt động trong mọi context (localhost, proxy, preview panel)
-// Fallback về localhost:3000 nếu origin không hợp lệ
-const API_BASE = (() => {
-  try {
-    const o = window.location.origin;
-    // origin hợp lệ phải bắt đầu bằng http:// hoặc https://
-    if (o && o.startsWith('http')) return o;
-  } catch(e) {}
-  return 'http://localhost:3000';
-})();
-
-// ── Process ───────────────────────────────────────────────────────────────────
-
-let currentJobId = null;
-let sseSource    = null;
-
-async function startProcess() {
-  if (!validate()) return;
-
-  // Reset UI
-  document.getElementById('errorBox').style.display = 'none';
-  document.getElementById('resultSection').style.display = 'none';
-  document.getElementById('progressSection').style.display = 'block';
-  document.getElementById('processBtn').disabled = true;
-  document.getElementById('progressBar').style.width = '0%';
-  document.getElementById('progressMsg').textContent = `Đang upload ${videoFiles.length} video${videoFiles.length > 1 ? ' (ghép nối tiếp)' : ''}...`;
-
-  try {
-    const fd = new FormData();
-    videoFiles.forEach(f => fd.append('video', f));
-    const music = document.getElementById('musicInput').files[0];
-    if (music) fd.append('music', music);
-
-    fd.append('titleText',     document.getElementById('titleText').value.trim().toUpperCase());
-    fd.append('subtitleText',  document.getElementById('subtitleText').value.trim());
-    fd.append('autoWrap',      document.getElementById('autoWrap').checked);
-    fd.append('maxChars',      document.getElementById('maxChars').value);
-    fd.append('overlayOpacity',document.getElementById('overlayOpacity').value);
-    fd.append('textY',         document.getElementById('textY').value);
-    fd.append('titleFontSize', document.getElementById('titleFontSize').value);
-    fd.append('subFontSize',   document.getElementById('subFontSize').value);
-    fd.append('musicVolume',   document.getElementById('musicVolume').value);
-    fd.append('origVolume',    document.getElementById('origVolume').value);
-    fd.append('keepOrigAudio', document.getElementById('keepOrigAudio').checked);
-    fd.append('titleColor',         document.getElementById('titleColor').value);
-    fd.append('subColor',           document.getElementById('subColor').value);
-    fd.append('transitionEffect',   document.getElementById('transitionEffect').value);
-    fd.append('transitionDuration', document.getElementById('transitionDuration').value);
-
-    document.getElementById('progressMsg').textContent = 'Đang gửi lên server...';
-
-    const resp = await fetch(`${API_BASE}/process`, { method: 'POST', body: fd });
-    const data = await resp.json();
-
-    if (!resp.ok || data.error) {
-      showError(data.error || 'Lỗi không xác định');
-      return;
-    }
-
-    currentJobId = data.jobId;
-    document.getElementById('progressMsg').textContent = 'FFmpeg đang xử lý...';
-
-    // Listen via SSE
-    sseSource = new EventSource(`${API_BASE}/status/${currentJobId}`);
-    sseSource.onmessage = e => handleStatus(JSON.parse(e.data));
-    sseSource.onerror   = () => {
-      sseSource.close();
-      showError('Mất kết nối với server');
-    };
-
-  } catch (err) {
-    showError(err.message);
-  }
-}
-
-function handleStatus(job) {
-  if (job.error) {
-    sseSource?.close();
-    showError(job.error, job.log);
-    return;
-  }
-
-  if (job.status === 'processing') {
-    const pct = job.progress || 0;
-    document.getElementById('progressBar').style.width = pct + '%';
-    document.getElementById('progressMsg').textContent = `Xử lý: ${pct}% hoàn thành...`;
-    return;
-  }
-
-  if (job.status === 'done') {
-    sseSource?.close();
-    document.getElementById('progressSection').style.display = 'none';
-
-    const vid      = document.getElementById('previewVideo');
-    const dlBtn    = document.getElementById('downloadBtn');
-    const metaEl   = document.getElementById('resultMeta');
-
-    vid.src    = `${API_BASE}/preview/${currentJobId}`;
-    dlBtn.href = `${API_BASE}/download/${currentJobId}`;
-    metaEl.textContent = job.sizeMB ? `Kích thước: ${job.sizeMB} MB` : '';
-
-    document.getElementById('resultSection').style.display = 'block';
-    document.getElementById('processBtn').disabled = false;
-
-    // Scroll xuống result
-    document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-}
-
-function showError(msg, log) {
-  document.getElementById('progressSection').style.display = 'none';
-  document.getElementById('processBtn').disabled = false;
-  document.getElementById('errorMsg').textContent = msg;
-  const logEl = document.getElementById('errLog');
-  if (log) {
-    logEl.textContent = log;
-    logEl.style.display = 'block';
-  } else {
-    logEl.style.display = 'none';
-  }
-  document.getElementById('errorBox').style.display = 'block';
-}
-
-function resetForm() {
-  document.getElementById('resultSection').style.display = 'none';
-  document.getElementById('errorBox').style.display = 'none';
-  document.getElementById('previewVideo').src = '';
-  document.getElementById('musicName').style.display = 'none';
-  document.getElementById('musicZone').classList.remove('has-file');
-  document.getElementById('musicInput').value = '';
-  videoFiles = [];
-  renderVideoList();
-  currentJobId = null;
-}
+// ── Boot ──────────────────────────────────────────────────────────────────────
+init();
 </script>
-
 </body>
 </html>

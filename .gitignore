@@ -2,3 +2,5 @@ node_modules/
 uploads/
 output/
 *.log
+.env
+*.zip
