@@ -339,8 +339,8 @@ input[type=range]::-webkit-slider-thumb {
     <p>Upload nguồn · AI nội dung · Batch tạo video</p>
   </div>
   <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('sources')">📁 Nguồn Video</button>
-    <button class="tab-btn" onclick="switchTab('batch')">🚀 Tạo Video</button>
+    <button class="tab-btn" onclick="switchTab('sources')">📁 Nguồn Video</button>
+    <button class="tab-btn active" onclick="switchTab('batch')">🚀 Tạo Video</button>
     <button class="tab-btn" onclick="switchTab('progress')">📊 Tiến Trình</button>
   </div>
 </header>
@@ -348,7 +348,7 @@ input[type=range]::-webkit-slider-thumb {
 <!-- ════════════════════════════════════════════════════
      TAB 1 — NGUỒN VIDEO
 ════════════════════════════════════════════════════ -->
-<div id="tab-sources" class="page active">
+<div id="tab-sources" class="page">
 <main>
   <div class="card">
     <div class="card-title" style="justify-content:space-between">
@@ -377,7 +377,7 @@ input[type=range]::-webkit-slider-thumb {
 <!-- ════════════════════════════════════════════════════
      TAB 2 — TẠO VIDEO
 ════════════════════════════════════════════════════ -->
-<div id="tab-batch" class="page">
+<div id="tab-batch" class="page active">
 <main>
 
   <!-- ── Source status ──────────────────────────────── -->
@@ -419,6 +419,11 @@ input[type=range]::-webkit-slider-thumb {
     <div class="card">
       <div class="card-title">🎨 Hiển thị</div>
 
+      <div class="slider-row">
+        <label>Thời lượng video</label>
+        <input type="range" id="duration" min="15" max="120" step="5" value="60" oninput="sv(this,'durationVal')">
+        <span class="slider-val" id="durationVal">60s</span>
+      </div>
       <div class="slider-row">
         <label>Độ tối overlay</label>
         <input type="range" id="overlayOpacity" min="0" max="1" step="0.05" value="0.45" oninput="sv(this,'overlayVal');updatePreview()">
@@ -798,6 +803,7 @@ async function startBatch() {
   fd.append('musicVolume',    document.getElementById('musicVolume').value);
   fd.append('origVolume',     document.getElementById('origVolume').value);
   fd.append('maxChars',       document.getElementById('maxChars').value);
+  fd.append('duration',       document.getElementById('duration').value);
 
   const btn = document.getElementById('btnStart');
   btn.disabled = true; btn.textContent = '⏳ Đang khởi động...';
@@ -915,7 +921,8 @@ function updateStartBtn() {
 }
 
 function sv(el, vid) {
-  document.getElementById(vid).textContent = el.id==='textY' ? el.value+'%' : el.value;
+  const suffix = el.id==='textY' ? '%' : el.id==='duration' ? 's' : '';
+  document.getElementById(vid).textContent = el.value + suffix;
 }
 
 function onMusicPick(input) {
@@ -980,6 +987,7 @@ mz.addEventListener('drop', e => {
 
 updatePreview();
 loadSources();
+checkSourceCount();
 </script>
 </body>
 </html>

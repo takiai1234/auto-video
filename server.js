@@ -140,8 +140,9 @@ function buildFFmpegArgs(videoPath, musicPath, assPath, config, outputPath) {
   args.push('-filter_complex', fc, '-map', '[v]');
   if (hasAudioOut) args.push('-map', '[a]', '-c:a', 'aac', '-b:a', '192k');
   else args.push('-an');
+  const durArgs = config.duration ? ['-t', String(config.duration)] : [];
   args.push('-c:v', 'libx264', '-preset', 'fast', '-crf', '20',
-    '-pix_fmt', 'yuv420p', '-shortest', '-movflags', '+faststart', '-y', outputPath);
+    '-pix_fmt', 'yuv420p', '-shortest', ...durArgs, '-movflags', '+faststart', '-y', outputPath);
   return args;
 }
 
@@ -398,6 +399,7 @@ app.post('/api/batch', uploadMusic.single('music'), (req, res) => {
     titleColor:     body.titleColor  || '#ffffff',
     subColor:       body.subColor    || '#ffff00',
     maxChars:       parseInt(body.maxChars          ?? 26),
+    duration:       parseInt(body.duration          ?? 60)  || 60,
   };
 
   const batchId = randomUUID();
