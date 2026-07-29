@@ -7,7 +7,7 @@ const { spawn }    = require('child_process');
 const path         = require('path');
 const fs           = require('fs');
 const { randomUUID } = require('crypto');
-const Anthropic    = require('@anthropic-ai/sdk');
+// AI content generation via 9router (no API key needed — uses Claude subscription)
 
 const _ffmpegLocal = path.join(__dirname, 'bin', 'ffmpeg');
 const FFMPEG = fs.existsSync(_ffmpegLocal) ? _ffmpegLocal : require('ffmpeg-static');
@@ -156,23 +156,41 @@ function generateThumbnail(videoPath, thumbPath) {
   });
 }
 
-// ─── AI Content Generation ────────────────────────────────────────────────────
+// ─── AI Content Generation (via 9router) ─────────────────────────────────────
 async function generateContentVariations(baseTitle, baseSubtitle, count) {
-  if (!process.env.ANTHROPIC_API_KEY) throw new Error('Chưa cấu hình ANTHROPIC_API_KEY trong .env');
-  const client = new Anthropic();
-  const msg = await client.messages.create({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 2048,
-    messages: [{
-      role: 'user',
-      content: `Tạo ${count} biến thể nội dung video ngắn (TikTok/Reels). Giữ chủ đề, đa dạng cách diễn đạt. Chỉ trả về JSON array:
+  const baseUrl = (process.env.NINE_ROUTER_URL || 'http://localhost:20128').replace(/\/$/, '');
+  const apiKey  = process.env.NINE_ROUTER_API_KEY;
+  const model   = process.env.NINE_ROUTER_MODEL || 'cc/claude-sonnet-4-6';
+
+  if (!apiKey) throw new Error('Chưa cấu hình NINE_ROUTER_API_KEY trong .env. Lấy key từ 9router dashboard.');
+
+  const res = await fetch(`${baseUrl}/v1/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: 2048,
+      messages: [{
+        role: 'user',
+        content: `Tạo ${count} biến thể nội dung video ngắn (TikTok/Reels). Giữ chủ đề, đa dạng cách diễn đạt. Chỉ trả về JSON array:
 [{"title":"...","subtitle":"..."}]
 
 Tiêu đề gốc: ${baseTitle}
 Phụ đề gốc: ${baseSubtitle || '(không có)'}`,
-    }],
+      }],
+    }),
   });
-  const text  = msg.content[0].text.trim();
+
+  if (!res.ok) {
+    const txt = await res.text().catch(() => '');
+    throw new Error(`9router error ${res.status}: ${txt.slice(0, 200)}`);
+  }
+
+  const data  = await res.json();
+  const text  = data.choices?.[0]?.message?.content?.trim() || '';
   const match = text.match(/\[[\s\S]*\]/);
   if (!match) throw new Error('AI không trả về JSON hợp lệ');
   const arr = JSON.parse(match[0]);
@@ -483,5 +501,7 @@ app.listen(PORT, () => {
   console.log(`\n🎬 Auto Video Creator v3.1 → http://localhost:${PORT}`);
   console.log(`   FFmpeg:    ${FFMPEG}`);
   console.log(`   Sources:   ${SOURCES_DIR}`);
-  console.log(`   Anthropic: ${process.env.ANTHROPIC_API_KEY ? '✓' : '✗ ANTHROPIC_API_KEY not set'}\n`);
+  const nrUrl = process.env.NINE_ROUTER_URL || 'http://localhost:20128';
+  const nrKey = process.env.NINE_ROUTER_API_KEY;
+  console.log(`   9router:   ${nrKey ? '✓ ' + nrUrl : '✗ NINE_ROUTER_API_KEY not set'}\n`);
 });
