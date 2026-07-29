@@ -4,8 +4,6 @@ require('dotenv').config();
 const express      = require('express');
 const multer       = require('multer');
 const { spawn }    = require('child_process');
-const { pipeline } = require('stream/promises');
-const { Readable } = require('stream');
 const path         = require('path');
 const fs           = require('fs');
 const { randomUUID } = require('crypto');
@@ -14,9 +12,13 @@ const Anthropic    = require('@anthropic-ai/sdk');
 const _ffmpegLocal = path.join(__dirname, 'bin', 'ffmpeg');
 const FFMPEG = fs.existsSync(_ffmpegLocal) ? _ffmpegLocal : require('ffmpeg-static');
 
-const UPLOAD_DIR = path.join(__dirname, 'uploads');
-const OUTPUT_DIR = path.join(__dirname, 'output');
-[UPLOAD_DIR, OUTPUT_DIR].forEach(d => fs.mkdirSync(d, { recursive: true }));
+const UPLOAD_DIR  = path.join(__dirname, 'uploads');
+const OUTPUT_DIR  = path.join(__dirname, 'output');
+const SOURCES_DIR = path.join(__dirname, 'sources');
+const THUMBS_DIR  = path.join(__dirname, 'thumbnails');
+[UPLOAD_DIR, OUTPUT_DIR, SOURCES_DIR, THUMBS_DIR].forEach(d => fs.mkdirSync(d, { recursive: true }));
+
+const VIDEO_EXT = /\.(mp4|mov|avi|mkv|webm|m4v|wmv|flv)$/i;
 
 const batchJobs = new Map();
 
@@ -24,7 +26,7 @@ const batchJobs = new Map();
 const app = express();
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.sendStatus(204);
   next();
@@ -32,13 +34,28 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-const storage = multer.diskStorage({
+// multer for music uploads (temp)
+const musicStorage = multer.diskStorage({
   destination: UPLOAD_DIR,
-  filename: (req, file, cb) => cb(null, randomUUID() + path.extname(file.originalname))
+  filename: (req, file, cb) => cb(null, randomUUID() + path.extname(file.originalname)),
 });
-const upload = multer({ storage, limits: { fileSize: 500 * 1024 * 1024 } });
+const uploadMusic = multer({ storage: musicStorage, limits: { fileSize: 200 * 1024 * 1024 } });
 
-// ─── Auto-wrap text ───────────────────────────────────────────────────────────
+// multer for source videos — saved to sources/
+const sourceStorage = multer.diskStorage({
+  destination: SOURCES_DIR,
+  filename: (req, file, cb) => {
+    const ext  = path.extname(file.originalname);
+    const base = path.basename(file.originalname, ext).replace(/[^a-zA-Z0-9._-]/g, '_');
+    let name = base + ext;
+    let i = 1;
+    while (fs.existsSync(path.join(SOURCES_DIR, name))) name = `${base}_${i++}${ext}`;
+    cb(null, name);
+  },
+});
+const uploadSource = multer({ storage: sourceStorage, limits: { fileSize: 2048 * 1024 * 1024 } });
+
+// ─── Core helpers (unchanged) ─────────────────────────────────────────────────
 function autoWrap(text, maxChars = 26) {
   const lines = [];
   text.split('\n').forEach(rawLine => {
@@ -46,24 +63,19 @@ function autoWrap(text, maxChars = 26) {
     const words = rawLine.trim().split(' ');
     let cur = '';
     words.forEach(w => {
-      if ((cur ? cur + ' ' + w : w).length > maxChars && cur.length > 0) {
-        lines.push(cur); cur = w;
-      } else {
-        cur = cur ? cur + ' ' + w : w;
-      }
+      if ((cur ? cur + ' ' + w : w).length > maxChars && cur.length > 0) { lines.push(cur); cur = w; }
+      else cur = cur ? cur + ' ' + w : w;
     });
     if (cur) lines.push(cur);
   });
   return lines.filter(Boolean);
 }
 
-// ─── #RRGGBB → ASS &H00BBGGRR ────────────────────────────────────────────────
 function hexToASS(hex) {
   const c = hex.replace('#', '');
   return `&H00${c.slice(4,6).toUpperCase()}${c.slice(2,4).toUpperCase()}${c.slice(0,2).toUpperCase()}`;
 }
 
-// ─── Generate ASS subtitle file ───────────────────────────────────────────────
 function generateASS(config, assPath) {
   const { titleLines, subtitle, textYPercent, titleFontSize, subFontSize, titleColor, subColor } = config;
   const titleASS = hexToASS(titleColor || '#ffffff');
@@ -75,111 +87,55 @@ function generateASS(config, assPath) {
   const esc = t => t.replace(/\\/g, '∖').replace(/\{/g, '｛').replace(/\}/g, '｝');
   const dialogues = [];
   titleLines.forEach((line, i) => {
-    const lineBottom = blockTop + (i + 1) * lineH;
-    dialogues.push(`Dialogue: 0,0:00:00.00,2:00:00.00,T,,0,0,${Math.max(0, 1920 - lineBottom)},,${esc(line)}`);
+    dialogues.push(`Dialogue: 0,0:00:00.00,2:00:00.00,T,,0,0,${Math.max(0, 1920 - (blockTop + (i+1)*lineH))},,${esc(line)}`);
   });
   if (subtitle) {
-    const rawSub   = subtitle.startsWith('(') ? subtitle : `(${subtitle})`;
-    const subBottom = blockTop + titleLines.length * lineH + 6 + subLineH;
-    dialogues.push(`Dialogue: 0,0:00:00.00,2:00:00.00,S,,0,0,${Math.max(0, 1920 - subBottom)},,${esc(rawSub)}`);
+    const rawSub = subtitle.startsWith('(') ? subtitle : `(${subtitle})`;
+    dialogues.push(`Dialogue: 0,0:00:00.00,2:00:00.00,S,,0,0,${Math.max(0, 1920 - (blockTop + titleLines.length*lineH + 6 + subLineH))},,${esc(rawSub)}`);
   }
   fs.writeFileSync(assPath, [
-    '[Script Info]', 'ScriptType: v4.00+', 'PlayResX: 1080', 'PlayResY: 1920', 'WrapStyle: 2', '',
+    '[Script Info]','ScriptType: v4.00+','PlayResX: 1080','PlayResY: 1920','WrapStyle: 2','',
     '[V4+ Styles]',
     'Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding',
     `Style: T,Noto Sans,${titleFontSize},${titleASS},${titleASS},&H00000000,&H00000000,1,0,0,0,100,100,0,0,1,2,3,2,0,0,0,1`,
     `Style: S,Noto Sans,${subFontSize},${subASS},${subASS},&H00000000,&H00000000,1,1,0,0,100,100,0,0,1,1,2,2,0,0,0,1`,
-    '', '[Events]',
+    '','[Events]',
     'Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text',
     ...dialogues,
   ].join('\n'), 'utf8');
 }
 
-// ─── Get video duration ───────────────────────────────────────────────────────
-function getVideoDuration(videoPath) {
-  return new Promise(resolve => {
-    const proc = spawn(FFMPEG, ['-hide_banner', '-i', videoPath], { stdio: ['ignore', 'ignore', 'pipe'] });
-    let stderr = '';
-    proc.stderr.on('data', d => { stderr += d.toString(); });
-    proc.on('close', () => {
-      const m = stderr.match(/Duration:\s*(\d+):(\d+):(\d+\.?\d*)/);
-      resolve(m ? parseInt(m[1]) * 3600 + parseInt(m[2]) * 60 + parseFloat(m[3]) : null);
-    });
-  });
-}
-
-// ─── Build filter_complex ─────────────────────────────────────────────────────
-function buildFilterComplex(assPath, config, numVideos, hasMusic, durations) {
-  const { overlayOpacity, musicVolume, keepOrigAudio, origVolume, transitionEffect, transitionDuration } = config;
+function buildFilterComplex(assPath, config, hasMusic) {
+  const { overlayOpacity, musicVolume, keepOrigAudio, origVolume } = config;
   const bf = (1.0 - overlayOpacity * 0.75).toFixed(3);
-  const n = numVideos;
-  const musicIdx = n;
-  const T = parseFloat(transitionDuration) || 0.5;
-  const useXfade = transitionEffect && transitionEffect !== 'none'
-    && n > 1 && Array.isArray(durations)
-    && durations.every(d => typeof d === 'number' && d > T);
   const escapedPath = assPath.replace(/\\/g, '\\\\').replace(/:/g, '\\:').replace(/'/g, "\\'");
   const fontsDir = path.join(__dirname, 'fonts').replace(/\\/g, '/').replace(/:/g, '\\:');
-  const parts = [];
-
-  for (let i = 0; i < n; i++) {
-    parts.push(`[${i}:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,fps=30,format=yuv420p[s${i}]`);
-  }
-
-  let videoOut;
-  if (n === 1) {
-    videoOut = 's0';
-  } else if (useXfade) {
-    let cumDur = durations[0];
-    for (let i = 0; i < n - 1; i++) {
-      const inA = i === 0 ? 's0' : `xf${i - 1}`;
-      const offset = Math.max(0, cumDur - T).toFixed(3);
-      parts.push(`[${inA}][s${i+1}]xfade=transition=${transitionEffect}:duration=${T}:offset=${offset}[xf${i}]`);
-      cumDur = cumDur + durations[i + 1] - T;
-    }
-    videoOut = `xf${n - 2}`;
-  } else {
-    parts.push(`${Array.from({length:n},(_,i)=>`[s${i}]`).join('')}concat=n=${n}:v=1:a=0[concatv]`);
-    videoOut = 'concatv';
-  }
-
-  parts.push(`[${videoOut}]colorchannelmixer=rr=${bf}:gg=${bf}:bb=${bf}[dark]`);
-  parts.push(`[dark]format=rgba,subtitles='${escapedPath}':fontsdir='${fontsDir}',format=yuv420p[v]`);
-
+  const parts = [
+    `[0:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,fps=30,format=yuv420p[s0]`,
+    `[s0]colorchannelmixer=rr=${bf}:gg=${bf}:bb=${bf}[dark]`,
+    `[dark]format=rgba,subtitles='${escapedPath}':fontsdir='${fontsDir}',format=yuv420p[v]`,
+  ];
+  let hasAudioOut = false;
   if (keepOrigAudio) {
-    let audioOut;
-    if (n === 1) {
-      audioOut = '0:a';
-    } else if (useXfade) {
-      for (let i = 0; i < n - 1; i++) {
-        const inA = i === 0 ? '0:a' : `af${i - 1}`;
-        parts.push(`[${inA}][${i+1}:a]acrossfade=d=${T}[af${i}]`);
-      }
-      audioOut = `af${n - 2}`;
-    } else {
-      parts.push(`${Array.from({length:n},(_,i)=>`[${i}:a]`).join('')}concat=n=${n}:v=0:a=1[concata]`);
-      audioOut = 'concata';
-    }
     if (hasMusic) {
-      parts.push(`[${audioOut}]volume=${origVolume}[oa]`);
-      parts.push(`[${musicIdx}:a]volume=${musicVolume}[ma]`);
+      parts.push(`[0:a]volume=${origVolume}[oa]`);
+      parts.push(`[1:a]volume=${musicVolume}[ma]`);
       parts.push('[oa][ma]amix=inputs=2:duration=first:dropout_transition=2[a]');
     } else {
-      parts.push(`[${audioOut}]volume=${origVolume}[a]`);
+      parts.push(`[0:a]volume=${origVolume}[a]`);
     }
+    hasAudioOut = true;
   } else if (hasMusic) {
-    parts.push(`[${musicIdx}:a]volume=${musicVolume}[a]`);
+    parts.push(`[1:a]volume=${musicVolume}[a]`);
+    hasAudioOut = true;
   }
-
-  return { fc: parts.join(';'), hasAudioOut: keepOrigAudio || hasMusic };
+  return { fc: parts.join(';'), hasAudioOut };
 }
 
-// ─── Build ffmpeg args ────────────────────────────────────────────────────────
-function buildFFmpegArgs(videoPaths, musicPath, assPath, config, outputPath, durations) {
+function buildFFmpegArgs(videoPath, musicPath, assPath, config, outputPath) {
   const hasMusic = !!musicPath;
-  const { fc, hasAudioOut } = buildFilterComplex(assPath, config, videoPaths.length, hasMusic, durations);
-  const args = [];
-  for (const vp of videoPaths) args.push('-i', vp);
+  const { fc, hasAudioOut } = buildFilterComplex(assPath, config, hasMusic);
+  const args = ['-i', videoPath];
   if (hasMusic) args.push('-stream_loop', '-1', '-i', musicPath);
   args.push('-filter_complex', fc, '-map', '[v]');
   if (hasAudioOut) args.push('-map', '[a]', '-c:a', 'aac', '-b:a', '192k');
@@ -189,52 +145,38 @@ function buildFFmpegArgs(videoPaths, musicPath, assPath, config, outputPath, dur
   return args;
 }
 
-// ─── Google Drive ─────────────────────────────────────────────────────────────
-async function listDriveVideos(folderId, apiKey) {
-  const q = encodeURIComponent(`'${folderId}' in parents and mimeType contains 'video/' and trashed = false`);
-  const fields = encodeURIComponent('files(id,name,mimeType,size)');
-  const url = `https://www.googleapis.com/drive/v3/files?q=${q}&key=${encodeURIComponent(apiKey)}&fields=${fields}&pageSize=100`;
-  const res = await fetch(url);
-  const data = await res.json();
-  if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
-  return data.files || [];
-}
-
-async function downloadDriveFile(fileId, apiKey, destPath) {
-  const url = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media&key=${encodeURIComponent(apiKey)}`;
-  const res = await fetch(url);
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`Drive download error ${res.status}: ${text.slice(0, 150)}`);
-  }
-  const writer = fs.createWriteStream(destPath);
-  await pipeline(Readable.fromWeb(res.body), writer);
+// ─── Thumbnail ────────────────────────────────────────────────────────────────
+function generateThumbnail(videoPath, thumbPath) {
+  return new Promise(resolve => {
+    const proc = spawn(FFMPEG, [
+      '-i', videoPath, '-ss', '00:00:02', '-vframes', '1',
+      '-vf', 'scale=320:-1', '-y', thumbPath,
+    ], { stdio: 'ignore' });
+    proc.on('close', resolve);
+  });
 }
 
 // ─── AI Content Generation ────────────────────────────────────────────────────
 async function generateContentVariations(baseTitle, baseSubtitle, count) {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    throw new Error('Chưa cấu hình ANTHROPIC_API_KEY trong file .env trên server');
-  }
+  if (!process.env.ANTHROPIC_API_KEY) throw new Error('Chưa cấu hình ANTHROPIC_API_KEY trong .env');
   const client = new Anthropic();
   const msg = await client.messages.create({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 2048,
     messages: [{
       role: 'user',
-      content: `Tạo ${count} biến thể nội dung video ngắn (TikTok/Reels/Shorts). Giữ nguyên chủ đề và phong cách, đa dạng cách diễn đạt. Chỉ trả về JSON array, không thêm gì khác:
+      content: `Tạo ${count} biến thể nội dung video ngắn (TikTok/Reels). Giữ chủ đề, đa dạng cách diễn đạt. Chỉ trả về JSON array:
 [{"title":"...","subtitle":"..."}]
 
 Tiêu đề gốc: ${baseTitle}
-Phụ đề gốc: ${baseSubtitle || '(không có)'}`
-    }]
+Phụ đề gốc: ${baseSubtitle || '(không có)'}`,
+    }],
   });
-  const text = msg.content[0].text.trim();
+  const text  = msg.content[0].text.trim();
   const match = text.match(/\[[\s\S]*\]/);
   if (!match) throw new Error('AI không trả về JSON hợp lệ');
   const arr = JSON.parse(match[0]);
-  if (!Array.isArray(arr)) throw new Error('Kết quả không phải array');
-  return arr.slice(0, count);
+  return Array.isArray(arr) ? arr.slice(0, count) : [];
 }
 
 // ─── Batch Processing ─────────────────────────────────────────────────────────
@@ -242,33 +184,36 @@ async function processBatch(batchId) {
   const batch = batchJobs.get(batchId);
   if (!batch) return;
 
+  const sourceFiles = fs.readdirSync(SOURCES_DIR).filter(f => VIDEO_EXT.test(f));
+  if (!sourceFiles.length) {
+    batch.status = 'error';
+    batch.items.forEach(it => { it.status = 'error'; it.error = 'Chưa có video nguồn trong folder sources/'; });
+    return;
+  }
+
   for (let i = 0; i < batch.items.length; i++) {
     const item = batch.items[i];
     item.status = 'processing';
 
-    const videoPath  = path.join(UPLOAD_DIR, `${randomUUID()}.mp4`);
+    const sourceFile = sourceFiles[Math.floor(Math.random() * sourceFiles.length)];
+    const videoPath  = path.join(SOURCES_DIR, sourceFile);
     const assPath    = path.join(UPLOAD_DIR, `${randomUUID()}.ass`);
     const outputPath = path.join(OUTPUT_DIR,  `${batchId}_${i}.mp4`);
 
     try {
-      const file = batch.driveFiles[Math.floor(Math.random() * batch.driveFiles.length)];
-      console.log(`[batch ${batchId.slice(0,6)}] ${i+1}/${batch.items.length} — downloading: ${file.name}`);
-      await downloadDriveFile(file.id, batch.driveApiKey, videoPath);
-
       const titleLines = autoWrap(item.title, batch.config.maxChars || 26);
       if (!titleLines.length) throw new Error('Tiêu đề trống');
-
       generateASS({ ...batch.config, titleLines, subtitle: item.subtitle || '' }, assPath);
 
-      const args = buildFFmpegArgs([videoPath], batch.musicPath, assPath, batch.config, outputPath, null);
+      const args = buildFFmpegArgs(videoPath, batch.musicPath, assPath, batch.config, outputPath);
+      console.log(`[batch ${batchId.slice(0,6)}] ${i+1}/${batch.items.length} ← ${sourceFile}`);
 
       await new Promise((resolve, reject) => {
         const proc = spawn(FFMPEG, args, { stdio: ['ignore', 'ignore', 'pipe'] });
         let stderr = '';
         proc.stderr.on('data', d => { stderr += d.toString(); });
         proc.on('close', code => {
-          fs.unlink(videoPath, () => {});
-          fs.unlink(assPath,   () => {});
+          fs.unlink(assPath, () => {});
           if (code === 0 && fs.existsSync(outputPath)) resolve();
           else reject(new Error(stderr.slice(-600)));
         });
@@ -277,42 +222,116 @@ async function processBatch(batchId) {
       item.status     = 'done';
       item.file       = `${batchId}_${i}.mp4`;
       item.sizeMB     = (fs.statSync(outputPath).size / 1024 / 1024).toFixed(1);
-      item.sourceName = file.name;
+      item.sourceName = sourceFile;
       console.log(`[batch ${batchId.slice(0,6)}] ${i+1} done (${item.sizeMB} MB)`);
     } catch (err) {
       item.status = 'error';
       item.error  = err.message.slice(0, 400);
+      fs.unlink(assPath, () => {});
       console.error(`[batch ${batchId.slice(0,6)}] ${i+1} error:`, err.message.slice(0, 200));
-      fs.unlink(videoPath, () => {});
-      fs.unlink(assPath,   () => {});
     }
   }
 
   if (batch.musicPath) fs.unlink(batch.musicPath, () => {});
-
   const doneCount  = batch.items.filter(x => x.status === 'done').length;
   const errorCount = batch.items.filter(x => x.status === 'error').length;
   batch.status = errorCount === batch.items.length ? 'error'
-               : doneCount  === batch.items.length ? 'done'
-               : 'partial';
+               : doneCount  === batch.items.length ? 'done' : 'partial';
   console.log(`[batch ${batchId.slice(0,6)}] finished: ${doneCount} done, ${errorCount} errors`);
 }
 
-// ─── API Routes ───────────────────────────────────────────────────────────────
+// ─── Source Video Management ──────────────────────────────────────────────────
 
-// List Google Drive videos
-app.get('/api/drive/list', async (req, res) => {
-  const { folderId, apiKey } = req.query;
-  if (!folderId || !apiKey) return res.status(400).json({ error: 'Thiếu folderId hoặc apiKey' });
+// List source videos
+app.get('/api/sources', (req, res) => {
   try {
-    const files = await listDriveVideos(folderId, apiKey);
-    res.json({ count: files.length, files });
+    const files = fs.readdirSync(SOURCES_DIR)
+      .filter(f => VIDEO_EXT.test(f))
+      .map(f => {
+        const stat = fs.statSync(path.join(SOURCES_DIR, f));
+        const thumbName = f.replace(/\.[^.]+$/, '.jpg');
+        return {
+          name:      f,
+          sizeMB:    (stat.size / 1024 / 1024).toFixed(1),
+          hasThumb:  fs.existsSync(path.join(THUMBS_DIR, thumbName)),
+          createdAt: stat.ctimeMs,
+        };
+      })
+      .sort((a, b) => b.createdAt - a.createdAt);
+    res.json({ files, count: files.length });
   } catch (e) {
-    res.status(400).json({ error: e.message });
+    res.status(500).json({ error: e.message });
   }
 });
 
-// Generate AI content variations
+// Upload source video(s)
+app.post('/api/sources/upload', uploadSource.array('video', 50), async (req, res) => {
+  if (!req.files?.length) return res.status(400).json({ error: 'Không có file' });
+  const results = req.files.map(f => ({
+    name:   f.filename,
+    sizeMB: (fs.statSync(f.path).size / 1024 / 1024).toFixed(1),
+  }));
+  // Generate thumbnails in background
+  req.files.forEach(f => {
+    const thumbPath = path.join(THUMBS_DIR, f.filename.replace(/\.[^.]+$/, '.jpg'));
+    generateThumbnail(f.path, thumbPath).catch(() => {});
+  });
+  res.json({ uploaded: results });
+});
+
+// Delete source video
+app.delete('/api/sources/:filename', (req, res) => {
+  const name = path.basename(req.params.filename);
+  const fp   = path.join(SOURCES_DIR, name);
+  if (!fs.existsSync(fp)) return res.status(404).json({ error: 'Không tìm thấy' });
+  fs.unlinkSync(fp);
+  const thumb = path.join(THUMBS_DIR, name.replace(/\.[^.]+$/, '.jpg'));
+  if (fs.existsSync(thumb)) fs.unlinkSync(thumb);
+  res.json({ ok: true });
+});
+
+// Rename source video
+app.patch('/api/sources/:filename', (req, res) => {
+  const oldName = path.basename(req.params.filename);
+  const rawNew  = (req.body.newName || '').trim();
+  if (!rawNew) return res.status(400).json({ error: 'Tên không hợp lệ' });
+
+  const ext      = path.extname(oldName);
+  const newBase  = rawNew.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9._-]/g, '_');
+  const newName  = newBase + ext;
+  const oldPath  = path.join(SOURCES_DIR, oldName);
+  const newPath  = path.join(SOURCES_DIR, newName);
+
+  if (!fs.existsSync(oldPath)) return res.status(404).json({ error: 'Không tìm thấy' });
+  if (fs.existsSync(newPath) && oldName !== newName) return res.status(409).json({ error: 'Tên đã tồn tại' });
+
+  fs.renameSync(oldPath, newPath);
+  const oldThumb = path.join(THUMBS_DIR, oldName.replace(/\.[^.]+$/, '.jpg'));
+  const newThumb = path.join(THUMBS_DIR, newName.replace(/\.[^.]+$/, '.jpg'));
+  if (fs.existsSync(oldThumb)) fs.renameSync(oldThumb, newThumb);
+
+  res.json({ name: newName });
+});
+
+// Serve thumbnail
+app.get('/api/sources/thumb/:filename', (req, res) => {
+  const name = path.basename(req.params.filename).replace(/\.[^.]+$/, '.jpg');
+  const fp   = path.join(THUMBS_DIR, name);
+  if (!fs.existsSync(fp)) return res.status(404).end();
+  res.sendFile(fp);
+});
+
+// Stream source video (with range support)
+app.get('/api/sources/video/:filename', (req, res) => {
+  const name = path.basename(req.params.filename);
+  const fp   = path.join(SOURCES_DIR, name);
+  if (!fs.existsSync(fp)) return res.status(404).send('Không tìm thấy');
+  streamFile(fp, req, res);
+});
+
+// ─── Batch API ────────────────────────────────────────────────────────────────
+
+// Generate AI content
 app.post('/api/content/generate', async (req, res) => {
   const { baseTitle, baseSubtitle, count } = req.body;
   if (!baseTitle?.trim()) return res.status(400).json({ error: 'Thiếu tiêu đề gốc' });
@@ -325,18 +344,11 @@ app.post('/api/content/generate', async (req, res) => {
   }
 });
 
-// Start batch job
-app.post('/api/batch', upload.single('music'), async (req, res) => {
-  const { folderId, apiKey, items: itemsJSON } = req.body;
-
-  if (!folderId?.trim() || !apiKey?.trim()) {
-    if (req.file) fs.unlink(req.file.path, () => {});
-    return res.status(400).json({ error: 'Thiếu Google Drive Folder ID hoặc API Key' });
-  }
-
+// Start batch
+app.post('/api/batch', uploadMusic.single('music'), (req, res) => {
   let items;
   try {
-    items = JSON.parse(itemsJSON || '[]');
+    items = JSON.parse(req.body.items || '[]');
     if (!Array.isArray(items) || !items.length) throw new Error();
   } catch {
     if (req.file) fs.unlink(req.file.path, () => {});
@@ -346,40 +358,33 @@ app.post('/api/batch', upload.single('music'), async (req, res) => {
   const validItems = items.filter(it => it?.title?.trim());
   if (!validItems.length) {
     if (req.file) fs.unlink(req.file.path, () => {});
-    return res.status(400).json({ error: 'Cần có ít nhất 1 video với tiêu đề' });
+    return res.status(400).json({ error: 'Cần ít nhất 1 video có tiêu đề' });
   }
 
-  let driveFiles;
-  try {
-    driveFiles = await listDriveVideos(folderId.trim(), apiKey.trim());
-    if (!driveFiles.length) throw new Error('Không tìm thấy video nào trong folder');
-  } catch (e) {
+  const sourceCount = fs.readdirSync(SOURCES_DIR).filter(f => VIDEO_EXT.test(f)).length;
+  if (!sourceCount) {
     if (req.file) fs.unlink(req.file.path, () => {});
-    return res.status(400).json({ error: 'Lỗi Drive: ' + e.message });
+    return res.status(400).json({ error: 'Chưa có video nguồn. Hãy upload video vào tab Nguồn Video trước.' });
   }
 
   const body = req.body;
   const config = {
-    overlayOpacity:     parseFloat(body.overlayOpacity   ?? 0.45),
-    musicVolume:        parseFloat(body.musicVolume       ?? 0.65),
-    keepOrigAudio:      body.keepOrigAudio === 'true',
-    origVolume:         parseFloat(body.origVolume        ?? 0.15),
-    textYPercent:       parseFloat(body.textY             ?? 52),
-    titleFontSize:      parseInt(body.titleFontSize        ?? 52),
-    subFontSize:        parseInt(body.subFontSize          ?? 38),
-    titleColor:         body.titleColor  || '#ffffff',
-    subColor:           body.subColor    || '#ffff00',
-    transitionEffect:   'none',
-    transitionDuration: 0,
-    maxChars:           parseInt(body.maxChars            ?? 26),
+    overlayOpacity: parseFloat(body.overlayOpacity ?? 0.45),
+    musicVolume:    parseFloat(body.musicVolume    ?? 0.65),
+    keepOrigAudio:  body.keepOrigAudio === 'true',
+    origVolume:     parseFloat(body.origVolume     ?? 0.15),
+    textYPercent:   parseFloat(body.textY          ?? 52),
+    titleFontSize:  parseInt(body.titleFontSize     ?? 52),
+    subFontSize:    parseInt(body.subFontSize        ?? 38),
+    titleColor:     body.titleColor  || '#ffffff',
+    subColor:       body.subColor    || '#ffff00',
+    maxChars:       parseInt(body.maxChars          ?? 26),
   };
 
   const batchId = randomUUID();
   batchJobs.set(batchId, {
-    status:      'processing',
-    driveFiles,
-    driveApiKey: apiKey.trim(),
-    musicPath:   req.file?.path || null,
+    status:    'processing',
+    musicPath: req.file?.path || null,
     config,
     items: validItems.map(it => ({
       title:    it.title.trim(),
@@ -389,7 +394,7 @@ app.post('/api/batch', upload.single('music'), async (req, res) => {
     createdAt: Date.now(),
   });
 
-  res.json({ batchId, total: validItems.length, driveVideoCount: driveFiles.length });
+  res.json({ batchId, total: validItems.length, sourceCount });
 
   processBatch(batchId).catch(err => {
     console.error('[processBatch unhandled]', err.message);
@@ -398,7 +403,7 @@ app.post('/api/batch', upload.single('music'), async (req, res) => {
   });
 });
 
-// Batch status via SSE
+// Batch status (SSE)
 app.get('/api/batch/:batchId/status', (req, res) => {
   const batch = batchJobs.get(req.params.batchId);
   if (!batch) return res.status(404).json({ error: 'Không tìm thấy batch' });
@@ -444,11 +449,15 @@ app.get('/api/download/:filename', (req, res) => {
   res.download(fp, cleanName);
 });
 
-// Preview video (range-supported)
+// Preview output video
 app.get('/api/preview/:filename', (req, res) => {
-  const filename = path.basename(req.params.filename);
-  const fp = path.join(OUTPUT_DIR, filename);
+  const fp = path.join(OUTPUT_DIR, path.basename(req.params.filename));
   if (!fs.existsSync(fp)) return res.status(404).send('Không tìm thấy');
+  streamFile(fp, req, res);
+});
+
+// ─── Range-streaming helper ───────────────────────────────────────────────────
+function streamFile(fp, req, res) {
   const stat  = fs.statSync(fp);
   const range = req.headers.range;
   if (range) {
@@ -466,12 +475,13 @@ app.get('/api/preview/:filename', (req, res) => {
     res.writeHead(200, { 'Content-Length': stat.size, 'Content-Type': 'video/mp4' });
     fs.createReadStream(fp).pipe(res);
   }
-});
+}
 
 // ─── Start ────────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`\n🎬 Auto Video Creator v3.0 → http://localhost:${PORT}`);
-  console.log(`   FFmpeg: ${FFMPEG}`);
-  console.log(`   Anthropic API: ${process.env.ANTHROPIC_API_KEY ? '✓ configured' : '✗ ANTHROPIC_API_KEY not set'}\n`);
+  console.log(`\n🎬 Auto Video Creator v3.1 → http://localhost:${PORT}`);
+  console.log(`   FFmpeg:    ${FFMPEG}`);
+  console.log(`   Sources:   ${SOURCES_DIR}`);
+  console.log(`   Anthropic: ${process.env.ANTHROPIC_API_KEY ? '✓' : '✗ ANTHROPIC_API_KEY not set'}\n`);
 });

@@ -5,409 +5,329 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🎬 Auto Video Creator</title>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  :root {
-    --bg:      #0d0f14;
-    --surface: #161b24;
-    --border:  #252d3a;
-    --accent:  #f5c518;
-    --accent2: #e8971a;
-    --text:    #e8eaf0;
-    --muted:   #6b7694;
-    --green:   #22c55e;
-    --red:     #ef4444;
-    --blue:    #3b82f6;
-    --radius:  12px;
-  }
+:root {
+  --bg:      #0d0f14;
+  --surface: #161b24;
+  --border:  #252d3a;
+  --accent:  #f5c518;
+  --accent2: #e8971a;
+  --text:    #e8eaf0;
+  --muted:   #6b7694;
+  --green:   #22c55e;
+  --red:     #ef4444;
+  --blue:    #3b82f6;
+  --radius:  12px;
+}
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    font-size: 14px;
-    min-height: 100vh;
-    padding: 0 0 80px;
-  }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 14px;
+  min-height: 100vh;
+  padding-bottom: 80px;
+}
 
-  header {
-    background: linear-gradient(135deg, #0d0f14, #161b24);
-    border-bottom: 1px solid var(--border);
-    padding: 18px 32px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    backdrop-filter: blur(12px);
-  }
-  .logo { font-size: 26px; }
-  .header-text h1 { font-size: 17px; font-weight: 700; color: var(--accent); }
-  .header-text p  { font-size: 11px; color: var(--muted); margin-top: 2px; }
-  .badge {
-    margin-left: auto;
-    background: var(--accent);
-    color: #000;
-    font-size: 10px;
-    font-weight: 700;
-    padding: 3px 10px;
-    border-radius: 20px;
-    letter-spacing: 0.5px;
-  }
+/* ─── Header ─────────────────────────────────────── */
+header {
+  background: linear-gradient(135deg,#0d0f14,#161b24);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 28px;
+  display: flex; align-items: center; gap: 14px;
+  position: sticky; top: 0; z-index: 100;
+}
+.logo { font-size: 26px; }
+.header-text h1 { font-size: 16px; font-weight: 700; color: var(--accent); }
+.header-text p  { font-size: 11px; color: var(--muted); margin-top: 2px; }
 
-  main {
-    max-width: 1140px;
-    margin: 24px auto;
-    padding: 0 20px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 18px;
-  }
-  @media (max-width: 800px) { main { grid-template-columns: 1fr; } }
-  .full-width { grid-column: 1 / -1; }
+/* ─── Tab bar ─────────────────────────────────────── */
+.tabs {
+  margin-left: auto;
+  display: flex; gap: 4px;
+}
+.tab-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 12px; font-weight: 600;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: all .2s;
+}
+.tab-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #000;
+}
+.tab-btn:not(.active):hover { border-color: var(--text); color: var(--text); }
 
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px;
-  }
-  .card-title {
-    font-size: 12px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    color: var(--accent);
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+/* ─── Page layout ─────────────────────────────────── */
+.page { display: none; }
+.page.active { display: block; }
 
-  label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+main {
+  max-width: 1140px;
+  margin: 24px auto;
+  padding: 0 20px;
+}
 
-  input[type=text], input[type=password], textarea {
-    width: 100%;
-    background: #0d0f14;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text);
-    font-family: inherit;
-    font-size: 14px;
-    padding: 9px 12px;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-  input[type=text]:focus, input[type=password]:focus, textarea:focus { border-color: var(--accent); }
-  textarea { resize: vertical; }
+/* ─── Card ────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 18px;
+}
+.card-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+@media(max-width:800px){ .card-grid { grid-template-columns: 1fr; } }
+.card-title {
+  font-size: 12px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .8px;
+  color: var(--accent);
+  margin-bottom: 16px;
+  display: flex; align-items: center; gap: 8px;
+}
 
-  .input-row { display: flex; gap: 10px; align-items: flex-end; }
-  .input-row > div { flex: 1; }
+label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+input[type=text], input[type=password], textarea {
+  width: 100%; background: #0d0f14;
+  border: 1px solid var(--border); border-radius: 8px;
+  color: var(--text); font-family: inherit; font-size: 14px;
+  padding: 9px 12px; outline: none; transition: border-color .2s;
+}
+input[type=text]:focus,input[type=password]:focus,textarea:focus { border-color: var(--accent); }
+textarea { resize: vertical; }
+.mb { margin-bottom: 14px; }
 
-  /* Drive section */
-  .drive-status {
-    margin-top: 10px;
-    padding: 8px 12px;
-    border-radius: 8px;
-    font-size: 12px;
-    display: none;
-  }
-  .drive-status.success { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); color: var(--green); }
-  .drive-status.error   { background: rgba(239,68,68,0.1);  border: 1px solid rgba(239,68,68,0.3);  color: var(--red); }
+/* ─── Source grid ─────────────────────────────────── */
+.source-upload-zone {
+  border: 2px dashed var(--border); border-radius: 10px;
+  padding: 28px 16px; text-align: center; cursor: pointer;
+  transition: all .2s; position: relative; margin-bottom: 18px;
+}
+.source-upload-zone:hover,.source-upload-zone.drag-over { border-color: var(--accent); background: rgba(245,197,24,.04); }
+.source-upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.source-upload-zone .dz-icon  { font-size: 36px; margin-bottom: 8px; }
+.source-upload-zone .dz-label { font-size: 14px; font-weight: 600; color: var(--text); }
+.source-upload-zone .dz-hint  { font-size: 12px; color: var(--muted); margin-top: 4px; }
 
-  /* Slider rows */
-  .slider-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 12px;
-  }
-  .slider-row label { width: 160px; margin: 0; flex-shrink: 0; }
-  .slider-row input[type=range] {
-    flex: 1;
-    -webkit-appearance: none;
-    height: 4px;
-    border-radius: 2px;
-    background: var(--border);
-    outline: none;
-    cursor: pointer;
-  }
-  input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 16px; height: 16px;
-    border-radius: 50%;
-    background: var(--accent);
-    cursor: pointer;
-    box-shadow: 0 0 6px rgba(245,197,24,.5);
-  }
-  .slider-val { width: 44px; text-align: right; font-size: 12px; font-weight: 600; color: var(--accent); }
+.upload-progress-bar {
+  height: 4px; background: var(--border); border-radius: 4px; margin-bottom: 14px; overflow: hidden; display: none;
+}
+.upload-progress-fill { height: 100%; background: var(--accent); border-radius: 4px; transition: width .3s; width: 0%; }
+.upload-status { font-size: 12px; color: var(--muted); margin-bottom: 10px; display: none; }
 
-  /* Toggle */
-  .toggle-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-  .toggle-row label { margin: 0; cursor: pointer; }
-  .toggle { position: relative; width: 36px; height: 20px; flex-shrink: 0; }
-  .toggle input { opacity: 0; width: 0; height: 0; }
-  .toggle-slider {
-    position: absolute; inset: 0;
-    background: var(--border); border-radius: 10px; cursor: pointer; transition: .2s;
-  }
-  .toggle-slider::before {
-    content: ''; position: absolute;
-    width: 14px; height: 14px; left: 3px; top: 3px;
-    background: #fff; border-radius: 50%; transition: .2s;
-  }
-  .toggle input:checked + .toggle-slider { background: var(--accent); }
-  .toggle input:checked + .toggle-slider::before { transform: translateX(16px); }
+.source-empty { text-align: center; padding: 32px; color: var(--muted); font-size: 13px; }
 
-  /* Drop zone for music */
-  .drop-zone {
-    border: 2px dashed var(--border);
-    border-radius: 10px;
-    padding: 20px 16px;
-    text-align: center;
-    cursor: pointer;
-    transition: all .2s;
-    position: relative;
-    display: flex; flex-direction: column; align-items: center; gap: 6px;
-  }
-  .drop-zone:hover, .drop-zone.drag-over { border-color: var(--accent); background: rgba(245,197,24,.05); }
-  .drop-zone.has-file { border-color: var(--green); background: rgba(34,197,94,.05); }
-  .drop-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
-  .drop-icon { font-size: 28px; }
-  .drop-label { font-size: 12px; font-weight: 600; }
-  .drop-hint  { font-size: 11px; color: var(--muted); }
+.source-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+}
+.src-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: border-color .2s;
+}
+.src-card:hover { border-color: rgba(245,197,24,.4); }
 
-  /* Color picker */
-  .color-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-  .color-row label { flex: 1; margin: 0; }
-  .color-row input[type=color] { width: 40px; height: 32px; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; background: transparent; padding: 2px; }
+.src-thumb-wrap {
+  position: relative;
+  width: 100%; aspect-ratio: 9/16;
+  background: #0a0c10;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; cursor: pointer;
+}
+.src-thumb { width: 100%; height: 100%; object-fit: cover; display: block; }
+.src-thumb-fallback {
+  font-size: 36px; position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: #0a0c10;
+}
+.src-play-btn {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,.5);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; opacity: 0; transition: opacity .2s;
+  border: none; cursor: pointer; color: #fff;
+}
+.src-thumb-wrap:hover .src-play-btn { opacity: 1; }
 
-  /* Buttons */
-  .btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    padding: 10px 18px; border: none; border-radius: 8px;
-    font-size: 13px; font-weight: 700; cursor: pointer; transition: all .2s;
-  }
-  .btn:disabled { opacity: .5; cursor: not-allowed; }
-  .btn-accent  { background: var(--accent); color: #000; }
-  .btn-accent:not(:disabled):hover  { background: var(--accent2); transform: translateY(-1px); }
-  .btn-green   { background: var(--green);  color: #000; }
-  .btn-green:not(:disabled):hover   { opacity: .9; transform: translateY(-1px); }
-  .btn-ghost   { background: transparent; color: var(--muted); border: 1px solid var(--border); }
-  .btn-ghost:not(:disabled):hover   { border-color: var(--text); color: var(--text); }
-  .btn-blue    { background: var(--blue);   color: #fff; }
-  .btn-blue:not(:disabled):hover    { opacity: .9; transform: translateY(-1px); }
-  .btn-primary {
-    width: 100%; padding: 14px; border-radius: 10px;
-    font-size: 16px; letter-spacing: .3px;
-    background: var(--accent); color: #000; border: none;
-    font-weight: 700; cursor: pointer; transition: all .2s;
-    box-shadow: 0 4px 20px rgba(245,197,24,.2);
-  }
-  .btn-primary:not(:disabled):hover { background: var(--accent2); transform: translateY(-1px); box-shadow: 0 6px 24px rgba(245,197,24,.35); }
-  .btn-primary:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
+.src-body { padding: 10px 10px 0; }
+.src-name {
+  font-size: 12px; font-weight: 600; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  margin-bottom: 2px;
+}
+.src-meta { font-size: 11px; color: var(--muted); margin-bottom: 8px; }
 
-  /* Video count selector */
-  .count-row { display: flex; align-items: center; gap: 12px; }
-  .count-display {
-    background: var(--accent);
-    color: #000;
-    font-size: 20px;
-    font-weight: 800;
-    width: 48px; height: 48px;
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-  }
-  .count-row input[type=range] { flex: 1; }
+.src-actions { display: flex; gap: 0; border-top: 1px solid var(--border); }
+.src-act-btn {
+  flex: 1; background: none; border: none; border-right: 1px solid var(--border);
+  color: var(--muted); cursor: pointer; padding: 7px 0; font-size: 14px;
+  transition: all .15s;
+}
+.src-act-btn:last-child { border-right: none; }
+.src-act-btn:hover.rename { color: var(--accent); background: rgba(245,197,24,.07); }
+.src-act-btn:hover.delete { color: var(--red);    background: rgba(239,68,68,.07); }
 
-  /* Content table */
-  .content-table-wrapper {
-    overflow-x: auto;
-    margin-top: 4px;
-  }
-  .content-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-  }
-  .content-table th {
-    background: #0d0f14;
-    color: var(--muted);
-    font-weight: 600;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: .5px;
-    padding: 8px 10px;
-    text-align: left;
-    border-bottom: 1px solid var(--border);
-  }
-  .content-table td {
-    padding: 6px 8px;
-    border-bottom: 1px solid rgba(37,45,58,.5);
-    vertical-align: middle;
-  }
-  .content-table .row-num {
-    color: var(--muted);
-    font-size: 11px;
-    text-align: center;
-    width: 32px;
-  }
-  .content-input {
-    width: 100%;
-    background: #0d0f14;
-    border: 1px solid transparent;
-    border-radius: 6px;
-    color: var(--text);
-    font-family: inherit;
-    font-size: 13px;
-    padding: 6px 9px;
-    outline: none;
-    transition: border-color .15s;
-  }
-  .content-input:focus { border-color: var(--accent); }
-  .content-table tr:hover .content-input { border-color: var(--border); }
-  .btn-del {
-    background: none;
-    border: none;
-    color: var(--muted);
-    cursor: pointer;
-    font-size: 16px;
-    padding: 4px 8px;
-    border-radius: 6px;
-    line-height: 1;
-  }
-  .btn-del:hover { color: var(--red); background: rgba(239,68,68,.1); }
+/* Rename inline */
+.src-name-input {
+  width: 100%; background: #0d0f14; border: 1px solid var(--accent);
+  border-radius: 6px; color: var(--text); font-size: 12px; font-weight: 600;
+  padding: 3px 7px; outline: none;
+}
 
-  /* Preview phone */
-  .phone-wrap {
-    display: flex;
-    justify-content: center;
-    margin-top: 6px;
-  }
-  .phone {
-    width: 160px;
-    height: 284px;
-    background: #000;
-    border-radius: 18px;
-    position: relative;
-    overflow: hidden;
-    border: 2px solid var(--border);
-    box-shadow: 0 8px 32px rgba(0,0,0,.5);
-  }
-  .phone-overlay {
-    position: absolute; inset: 0;
-    background: rgba(0,0,0,.45);
-  }
-  .phone-text {
-    position: absolute;
-    width: 100%;
-    text-align: center;
-    padding: 0 10px;
-    top: 50%;
-    transform: translateY(-50%);
-  }
-  .phone-title {
-    font-size: 11px;
-    font-weight: 800;
-    color: #fff;
-    text-shadow: 1px 1px 4px rgba(0,0,0,.9);
-    line-height: 1.4;
-    text-transform: uppercase;
-    white-space: pre-line;
-  }
-  .phone-sub {
-    font-size: 9px;
-    font-style: italic;
-    color: #f5c518;
-    text-shadow: 1px 1px 3px rgba(0,0,0,.9);
-    margin-top: 4px;
-  }
+/* ─── Batch tab ───────────────────────────────────── */
+.slider-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.slider-row label { width: 160px; margin: 0; flex-shrink: 0; }
+.slider-row input[type=range] {
+  flex: 1; -webkit-appearance: none; height: 4px;
+  border-radius: 2px; background: var(--border); outline: none; cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 16px; height: 16px;
+  border-radius: 50%; background: var(--accent); cursor: pointer;
+  box-shadow: 0 0 6px rgba(245,197,24,.5);
+}
+.slider-val { width: 44px; text-align: right; font-size: 12px; font-weight: 600; color: var(--accent); }
 
-  /* Progress section */
-  #progressSection { display: none; }
+.toggle-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.toggle-row label { margin: 0; cursor: pointer; }
+.toggle { position: relative; width: 36px; height: 20px; flex-shrink: 0; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-slider { position: absolute; inset: 0; background: var(--border); border-radius: 10px; cursor: pointer; transition: .2s; }
+.toggle-slider::before { content:''; position: absolute; width: 14px; height: 14px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .2s; }
+.toggle input:checked + .toggle-slider { background: var(--accent); }
+.toggle input:checked + .toggle-slider::before { transform: translateX(16px); }
 
-  .progress-bar-wrap {
-    background: var(--bg);
-    border-radius: 99px;
-    height: 8px;
-    margin: 8px 0 4px;
-    overflow: hidden;
-  }
-  .progress-bar-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--accent), var(--accent2));
-    border-radius: 99px;
-    transition: width .4s ease;
-    width: 0%;
-  }
-  .progress-summary {
-    font-size: 12px;
-    color: var(--muted);
-    margin-bottom: 16px;
-  }
+.color-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.color-row label { flex: 1; margin: 0; }
+.color-row input[type=color] { width: 40px; height: 32px; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; background: transparent; padding: 2px; }
 
-  .progress-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 10px;
-  }
-  .progress-item {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px;
-  }
-  .progress-item.done    { border-color: rgba(34,197,94,.4); }
-  .progress-item.error   { border-color: rgba(239,68,68,.4); }
-  .progress-item.processing { border-color: rgba(245,197,24,.3); }
+.count-row { display: flex; align-items: center; gap: 12px; }
+.count-badge {
+  background: var(--accent); color: #000;
+  font-size: 20px; font-weight: 800;
+  width: 48px; height: 48px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.count-row input[type=range] { flex: 1; }
 
-  .pi-num  { font-size: 10px; color: var(--muted); margin-bottom: 4px; }
-  .pi-title { font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 2px; line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .pi-sub  { font-size: 11px; color: var(--muted); margin-bottom: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .pi-status { font-size: 11px; margin-bottom: 8px; }
-  .pi-status.ok   { color: var(--green); }
-  .pi-status.fail { color: var(--red); }
-  .pi-status.spin { color: var(--accent); }
-  .pi-status.wait { color: var(--muted); }
-  .pi-actions { display: flex; gap: 6px; flex-wrap: wrap; }
-  .pi-actions .btn { padding: 6px 12px; font-size: 11px; }
+.drop-zone {
+  border: 2px dashed var(--border); border-radius: 10px;
+  padding: 20px 16px; text-align: center; cursor: pointer;
+  transition: all .2s; position: relative;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+}
+.drop-zone:hover,.drop-zone.drag-over { border-color: var(--accent); background: rgba(245,197,24,.04); }
+.drop-zone.has-file { border-color: var(--green); background: rgba(34,197,94,.05); }
+.drop-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.drop-icon { font-size: 26px; }
+.drop-label { font-size: 12px; font-weight: 600; }
+.drop-hint  { font-size: 11px; color: var(--muted); }
 
-  /* Spinner */
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .spin-icon { display: inline-block; animation: spin 1s linear infinite; }
+/* Content table */
+.content-table-wrap { overflow-x: auto; margin-top: 4px; }
+.content-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.content-table th {
+  background: #0d0f14; color: var(--muted); font-weight: 600;
+  font-size: 11px; text-transform: uppercase; letter-spacing: .5px;
+  padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border);
+}
+.content-table td { padding: 5px 8px; border-bottom: 1px solid rgba(37,45,58,.5); vertical-align: middle; }
+.content-table .row-num { color: var(--muted); font-size: 11px; text-align: center; width: 32px; }
+.ci {
+  width: 100%; background: #0d0f14; border: 1px solid transparent;
+  border-radius: 6px; color: var(--text); font-family: inherit;
+  font-size: 13px; padding: 6px 9px; outline: none; transition: border-color .15s;
+}
+.ci:focus { border-color: var(--accent); }
+.btn-del { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; padding: 4px 8px; border-radius: 6px; }
+.btn-del:hover { color: var(--red); background: rgba(239,68,68,.1); }
 
-  /* Modal */
-  .modal-backdrop {
-    display: none;
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,.85);
-    z-index: 200;
-    align-items: center;
-    justify-content: center;
-  }
-  .modal-backdrop.open { display: flex; }
-  .modal {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 20px;
-    width: min(540px, 95vw);
-  }
-  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-  .modal-title  { font-size: 14px; font-weight: 700; color: var(--accent); }
-  .modal-close  { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 20px; padding: 0 4px; }
-  .modal video  { width: 100%; border-radius: 10px; max-height: 70vh; background: #000; }
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 9px 16px; border: none; border-radius: 8px;
+  font-size: 13px; font-weight: 700; cursor: pointer; transition: all .2s;
+}
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn-accent { background: var(--accent); color: #000; }
+.btn-accent:not(:disabled):hover { background: var(--accent2); transform: translateY(-1px); }
+.btn-green  { background: var(--green);  color: #000; }
+.btn-green:not(:disabled):hover  { opacity: .9; transform: translateY(-1px); }
+.btn-ghost  { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+.btn-ghost:not(:disabled):hover  { border-color: var(--text); color: var(--text); }
+.btn-blue   { background: var(--blue);   color: #fff; }
+.btn-blue:not(:disabled):hover   { opacity: .9; transform: translateY(-1px); }
+.btn-primary {
+  width: 100%; padding: 14px; border-radius: 10px;
+  font-size: 16px; letter-spacing: .3px;
+  background: var(--accent); color: #000; border: none;
+  font-weight: 700; cursor: pointer; transition: all .2s;
+  box-shadow: 0 4px 20px rgba(245,197,24,.2);
+}
+.btn-primary:not(:disabled):hover { background: var(--accent2); transform: translateY(-1px); box-shadow: 0 6px 24px rgba(245,197,24,.35); }
+.btn-primary:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
 
-  /* Separator */
-  .sep { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+/* Phone preview */
+.phone-wrap { display: flex; justify-content: center; margin-top: 8px; }
+.phone { width: 140px; height: 250px; background: #000; border-radius: 16px; position: relative; overflow: hidden; border: 2px solid var(--border); }
+.phone-overlay { position: absolute; inset: 0; background: rgba(0,0,0,.45); }
+.phone-text { position: absolute; width: 100%; text-align: center; padding: 0 10px; top: 50%; transform: translateY(-50%); }
+.phone-title { font-size: 10px; font-weight: 800; color: #fff; text-shadow: 1px 1px 4px rgba(0,0,0,.9); line-height: 1.4; text-transform: uppercase; white-space: pre-line; }
+.phone-sub   { font-size: 8.5px; font-style: italic; color: #f5c518; text-shadow: 1px 1px 3px rgba(0,0,0,.9); margin-top: 3px; }
 
-  .hint { font-size: 11px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
-  .hint a { color: var(--accent); text-decoration: none; }
+/* Progress */
+.progress-bar-wrap { background: var(--bg); border-radius: 99px; height: 8px; margin: 8px 0 4px; overflow: hidden; }
+.progress-bar-fill { height: 100%; background: linear-gradient(90deg,var(--accent),var(--accent2)); border-radius: 99px; transition: width .4s; width: 0%; }
+.progress-summary  { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
 
-  /* Section spacing */
-  .mb { margin-bottom: 14px; }
+.progress-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.pi {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px;
+}
+.pi.done    { border-color: rgba(34,197,94,.4); }
+.pi.error   { border-color: rgba(239,68,68,.4); }
+.pi.processing { border-color: rgba(245,197,24,.3); }
+.pi-num   { font-size: 10px; color: var(--muted); margin-bottom: 4px; }
+.pi-title { font-size: 12px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 2px; }
+.pi-sub   { font-size: 11px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 8px; }
+.pi-st    { font-size: 11px; margin-bottom: 8px; }
+.pi-st.ok   { color: var(--green); }
+.pi-st.fail { color: var(--red); }
+.pi-st.spin { color: var(--accent); }
+.pi-st.wait { color: var(--muted); }
+.pi-acts  { display: flex; gap: 6px; flex-wrap: wrap; }
+.pi-acts .btn { padding: 5px 11px; font-size: 11px; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin-icon { display: inline-block; animation: spin 1s linear infinite; }
+
+/* Modal */
+.modal-bd { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.85); z-index: 200; align-items: center; justify-content: center; }
+.modal-bd.open { display: flex; }
+.modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; width: min(520px, 95vw); }
+.modal-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.modal-title { font-size: 14px; font-weight: 700; color: var(--accent); }
+.modal-close { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 20px; padding: 0 4px; }
+.modal video { width: 100%; border-radius: 10px; background: #000; max-height: 70vh; }
+
+.sep { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+.hint { font-size: 11px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+.row-btns { display: flex; gap: 10px; margin-top: 10px; }
 </style>
 </head>
 <body>
@@ -416,200 +336,226 @@
   <div class="logo">🎬</div>
   <div class="header-text">
     <h1>Auto Video Creator</h1>
-    <p>Google Drive → AI Content → Batch MP4</p>
+    <p>Upload nguồn · AI nội dung · Batch tạo video</p>
   </div>
-  <div class="badge">v3.0</div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('sources')">📁 Nguồn Video</button>
+    <button class="tab-btn" onclick="switchTab('batch')">🚀 Tạo Video</button>
+    <button class="tab-btn" onclick="switchTab('progress')">📊 Tiến Trình</button>
+  </div>
 </header>
 
+<!-- ════════════════════════════════════════════════════
+     TAB 1 — NGUỒN VIDEO
+════════════════════════════════════════════════════ -->
+<div id="tab-sources" class="page active">
+<main>
+  <div class="card">
+    <div class="card-title" style="justify-content:space-between">
+      <span>📁 Quản lý video nguồn</span>
+      <span id="sourceCountBadge" style="font-size:12px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0"></span>
+    </div>
+
+    <div class="source-upload-zone" id="uploadZone">
+      <input type="file" id="uploadInput" accept="video/*" multiple onchange="handleUpload(this.files)">
+      <div class="dz-icon">📤</div>
+      <div class="dz-label">Kéo thả hoặc click để upload video nguồn</div>
+      <div class="dz-hint">MP4, MOV, AVI, MKV · Nhiều file cùng lúc · Không giới hạn dung lượng</div>
+    </div>
+
+    <div class="upload-progress-bar" id="uploadProgressBar"><div class="upload-progress-fill" id="uploadProgressFill"></div></div>
+    <div class="upload-status" id="uploadStatus"></div>
+
+    <div id="sourceList">
+      <div class="source-empty" id="sourceEmpty">Chưa có video nguồn nào. Hãy upload video lên.</div>
+      <div class="source-grid" id="sourceGrid" style="display:none"></div>
+    </div>
+  </div>
+</main>
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     TAB 2 — TẠO VIDEO
+════════════════════════════════════════════════════ -->
+<div id="tab-batch" class="page">
 <main>
 
-  <!-- ── DRIVE CONFIG ────────────────────────────────────────────────── -->
-  <div class="card">
-    <div class="card-title">☁️ Google Drive</div>
-
-    <div class="mb">
-      <label>Folder ID</label>
-      <input type="text" id="driveFolderId" placeholder="1ABCxyz... (từ URL của folder Drive)">
-    </div>
-    <div class="mb">
-      <label>Google API Key</label>
-      <input type="password" id="driveApiKey" placeholder="AIzaSy...">
-    </div>
-    <button class="btn btn-blue" id="btnTestDrive" onclick="testDrive()" style="width:100%">
-      Kiểm tra kết nối
-    </button>
-    <div class="drive-status" id="driveStatus"></div>
-    <p class="hint" style="margin-top:10px">
-      Folder Drive cần được share <strong style="color:var(--text)">"Anyone with the link"</strong>.<br>
-      Tạo API Key tại <a href="https://console.cloud.google.com" target="_blank">Google Cloud Console</a> → enable Drive API.
-    </p>
+  <!-- ── Source status ──────────────────────────────── -->
+  <div id="noSourceWarning" class="card" style="display:none;border-color:rgba(239,68,68,.4)">
+    <div style="color:var(--red);font-weight:700;margin-bottom:6px">⚠ Chưa có video nguồn</div>
+    <div style="font-size:13px;color:var(--muted)">Hãy vào tab <strong style="color:var(--text)">Nguồn Video</strong> để upload video trước khi tạo.</div>
   </div>
 
-  <!-- ── VISUAL SETTINGS ────────────────────────────────────────────── -->
-  <div class="card">
-    <div class="card-title">🎨 Hiển thị</div>
+  <div class="card-grid">
 
-    <div class="slider-row">
-      <label>Độ tối overlay</label>
-      <input type="range" id="overlayOpacity" min="0" max="1" step="0.05" value="0.45" oninput="sv(this,'overlayVal');updatePreview()">
-      <span class="slider-val" id="overlayVal">0.45</span>
-    </div>
-    <div class="slider-row">
-      <label>Vị trí text (% từ trên)</label>
-      <input type="range" id="textY" min="20" max="80" step="1" value="52" oninput="sv(this,'textYVal');updatePreview()">
-      <span class="slider-val" id="textYVal">52%</span>
-    </div>
-    <div class="slider-row">
-      <label>Cỡ chữ tiêu đề</label>
-      <input type="range" id="titleFontSize" min="28" max="80" step="2" value="52" oninput="sv(this,'titleFsVal');updatePreview()">
-      <span class="slider-val" id="titleFsVal">52</span>
-    </div>
-    <div class="slider-row">
-      <label>Cỡ chữ phụ đề</label>
-      <input type="range" id="subFontSize" min="20" max="60" step="2" value="38" oninput="sv(this,'subFsVal');updatePreview()">
-      <span class="slider-val" id="subFsVal">38</span>
-    </div>
-    <div class="slider-row">
-      <label>Ký tự tối đa / dòng</label>
-      <input type="range" id="maxChars" min="14" max="36" step="1" value="26" oninput="sv(this,'maxCharsVal')">
-      <span class="slider-val" id="maxCharsVal">26</span>
+    <!-- Batch setup -->
+    <div class="card">
+      <div class="card-title">📋 Nội dung</div>
+
+      <div class="mb">
+        <label>Số lượng video</label>
+        <div class="count-row">
+          <div class="count-badge" id="countBadge">5</div>
+          <input type="range" id="videoCount" min="1" max="20" value="5" oninput="document.getElementById('countBadge').textContent=this.value">
+        </div>
+      </div>
+
+      <div class="mb">
+        <label>Tiêu đề gốc</label>
+        <textarea id="baseTitle" rows="2" placeholder="VD: CÁCH ĐỂ BẮT ĐẦU NGÀY MỚI TRÀN ĐẦY NĂNG LƯỢNG" oninput="updatePreview()"></textarea>
+      </div>
+      <div class="mb">
+        <label>Phụ đề gốc (tuỳ chọn)</label>
+        <input type="text" id="baseSubtitle" placeholder="VD: Bắt đầu từ hôm nay" oninput="updatePreview()">
+      </div>
+
+      <button class="btn btn-blue" id="btnGenerate" onclick="generateContent()" style="width:100%">
+        ✨ Đề xuất nội dung AI
+      </button>
+      <p class="hint" style="margin-top:8px">AI (Claude) sẽ tạo ra các biến thể nội dung. Bạn có thể chỉnh sửa trước khi tạo video.</p>
     </div>
 
-    <hr class="sep">
+    <!-- Visual settings -->
+    <div class="card">
+      <div class="card-title">🎨 Hiển thị</div>
 
-    <div class="color-row">
-      <label>Màu tiêu đề</label>
-      <input type="color" id="titleColor" value="#ffffff" oninput="updatePreview()">
-    </div>
-    <div class="color-row">
-      <label>Màu phụ đề</label>
-      <input type="color" id="subColor" value="#f5c518" oninput="updatePreview()">
-    </div>
-  </div>
-
-  <!-- ── BATCH SETUP ────────────────────────────────────────────────── -->
-  <div class="card">
-    <div class="card-title">📋 Nội dung</div>
-
-    <div class="mb">
-      <label>Số lượng video</label>
-      <div class="count-row">
-        <div class="count-display" id="countDisplay">5</div>
-        <input type="range" id="videoCount" min="1" max="20" value="5"
-          oninput="document.getElementById('countDisplay').textContent=this.value">
+      <div class="slider-row">
+        <label>Độ tối overlay</label>
+        <input type="range" id="overlayOpacity" min="0" max="1" step="0.05" value="0.45" oninput="sv(this,'overlayVal');updatePreview()">
+        <span class="slider-val" id="overlayVal">0.45</span>
+      </div>
+      <div class="slider-row">
+        <label>Vị trí text (%)</label>
+        <input type="range" id="textY" min="20" max="80" step="1" value="52" oninput="sv(this,'textYVal');updatePreview()">
+        <span class="slider-val" id="textYVal">52%</span>
+      </div>
+      <div class="slider-row">
+        <label>Cỡ chữ tiêu đề</label>
+        <input type="range" id="titleFontSize" min="28" max="80" step="2" value="52" oninput="sv(this,'titleFsVal')">
+        <span class="slider-val" id="titleFsVal">52</span>
+      </div>
+      <div class="slider-row">
+        <label>Cỡ chữ phụ đề</label>
+        <input type="range" id="subFontSize" min="20" max="60" step="2" value="38" oninput="sv(this,'subFsVal')">
+        <span class="slider-val" id="subFsVal">38</span>
+      </div>
+      <div class="slider-row">
+        <label>Ký tự tối đa / dòng</label>
+        <input type="range" id="maxChars" min="14" max="36" step="1" value="26" oninput="sv(this,'maxCharsVal')">
+        <span class="slider-val" id="maxCharsVal">26</span>
+      </div>
+      <hr class="sep">
+      <div class="color-row">
+        <label>Màu tiêu đề</label>
+        <input type="color" id="titleColor" value="#ffffff" oninput="updatePreview()">
+      </div>
+      <div class="color-row">
+        <label>Màu phụ đề</label>
+        <input type="color" id="subColor" value="#f5c518" oninput="updatePreview()">
       </div>
     </div>
 
-    <div class="mb">
-      <label>Tiêu đề gốc</label>
-      <textarea id="baseTitle" rows="2" placeholder="VD: CÁCH ĐỂ BẮT ĐẦU NGÀY MỚI TRÀN ĐẦY NĂNG LƯỢNG" oninput="updatePreview()"></textarea>
-    </div>
-    <div class="mb">
-      <label>Phụ đề gốc (tuỳ chọn)</label>
-      <input type="text" id="baseSubtitle" placeholder="VD: Bắt đầu từ hôm nay" oninput="updatePreview()">
-    </div>
+    <!-- Audio -->
+    <div class="card">
+      <div class="card-title">🎵 Âm thanh</div>
 
-    <button class="btn btn-blue" id="btnGenerate" onclick="generateContent()" style="width:100%">
-      ✨ Đề xuất nội dung AI
-    </button>
-  </div>
-
-  <!-- ── AUDIO SETTINGS ────────────────────────────────────────────── -->
-  <div class="card">
-    <div class="card-title">🎵 Âm thanh</div>
-
-    <div class="mb">
-      <label>Nhạc nền (tuỳ chọn)</label>
-      <div class="drop-zone" id="musicZone">
-        <input type="file" id="musicFile" accept="audio/*" onchange="onMusicSelect(this)">
-        <div class="drop-icon">🎵</div>
-        <div class="drop-label">Kéo thả hoặc click để chọn nhạc</div>
-        <div class="drop-hint" id="musicFileName">MP3, AAC, WAV · Dùng chung cho tất cả video</div>
+      <div class="mb">
+        <label>Nhạc nền (dùng chung cho tất cả video)</label>
+        <div class="drop-zone" id="musicZone">
+          <input type="file" id="musicFile" accept="audio/*" onchange="onMusicPick(this)">
+          <div class="drop-icon">🎵</div>
+          <div class="drop-label" id="musicLabel">Chọn file nhạc</div>
+          <div class="drop-hint">MP3, AAC, WAV — tuỳ chọn</div>
+        </div>
+      </div>
+      <div class="slider-row">
+        <label>Âm lượng nhạc</label>
+        <input type="range" id="musicVolume" min="0" max="1" step="0.05" value="0.65" oninput="sv(this,'musicVolVal')">
+        <span class="slider-val" id="musicVolVal">0.65</span>
+      </div>
+      <div class="toggle-row">
+        <label class="toggle"><input type="checkbox" id="keepOrigAudio"><span class="toggle-slider"></span></label>
+        <label for="keepOrigAudio">Giữ âm thanh gốc video</label>
+      </div>
+      <div class="slider-row" id="origVolRow" style="opacity:.4">
+        <label>Âm lượng gốc</label>
+        <input type="range" id="origVolume" min="0" max="1" step="0.05" value="0.15" oninput="sv(this,'origVolVal')">
+        <span class="slider-val" id="origVolVal">0.15</span>
       </div>
     </div>
-
-    <div class="slider-row">
-      <label>Âm lượng nhạc</label>
-      <input type="range" id="musicVolume" min="0" max="1" step="0.05" value="0.65" oninput="sv(this,'musicVolVal')">
-      <span class="slider-val" id="musicVolVal">0.65</span>
-    </div>
-    <div class="toggle-row">
-      <label class="toggle">
-        <input type="checkbox" id="keepOrigAudio">
-        <span class="toggle-slider"></span>
-      </label>
-      <label for="keepOrigAudio">Giữ âm thanh gốc video</label>
-    </div>
-    <div class="slider-row" id="origVolRow" style="opacity:.4">
-      <label>Âm lượng gốc</label>
-      <input type="range" id="origVolume" min="0" max="1" step="0.05" value="0.15" oninput="sv(this,'origVolVal')">
-      <span class="slider-val" id="origVolVal">0.15</span>
-    </div>
-
-    <hr class="sep">
 
     <!-- Preview -->
-    <div class="card-title" style="margin-top:4px">👁️ Xem trước</div>
-    <div class="phone-wrap">
-      <div class="phone">
-        <div class="phone-overlay" id="previewOverlay"></div>
-        <div class="phone-text">
-          <div class="phone-title" id="previewTitle">TIÊU ĐỀ VIDEO</div>
-          <div class="phone-sub"   id="previewSub">(Phụ đề)</div>
+    <div class="card">
+      <div class="card-title">👁 Xem trước</div>
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="phone-overlay" id="prevOverlay"></div>
+          <div class="phone-text" id="prevTextWrap">
+            <div class="phone-title" id="prevTitle">TIÊU ĐỀ</div>
+            <div class="phone-sub"   id="prevSub"></div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- ── CONTENT TABLE ──────────────────────────────────────────────── -->
-  <div class="card full-width" id="contentTableCard" style="display:none">
+  </div><!-- /card-grid -->
+
+  <!-- Content table (shown after generate) -->
+  <div class="card" id="contentTableCard" style="display:none">
     <div class="card-title" style="justify-content:space-between">
       <span>📝 Danh sách nội dung</span>
-      <button class="btn btn-ghost" onclick="addRow()" style="padding:4px 12px;font-size:12px">+ Thêm dòng</button>
+      <button class="btn btn-ghost" onclick="addRow()" style="padding:4px 12px;font-size:12px">+ Thêm</button>
     </div>
-    <div class="content-table-wrapper">
+    <div class="content-table-wrap">
       <table class="content-table">
         <thead>
           <tr>
             <th style="width:36px">#</th>
             <th>Tiêu đề</th>
-            <th style="width:35%">Phụ đề</th>
+            <th style="width:36%">Phụ đề</th>
             <th style="width:36px"></th>
           </tr>
         </thead>
-        <tbody id="contentTableBody"></tbody>
+        <tbody id="contentBody"></tbody>
       </table>
     </div>
-    <p class="hint" style="margin-top:10px">Mỗi video sẽ dùng 1 video ngẫu nhiên từ Drive folder. Chỉnh sửa nội dung tuỳ ý trước khi tạo.</p>
+    <p class="hint" style="margin-top:10px">
+      Mỗi video sẽ dùng 1 video nguồn ngẫu nhiên từ folder sources. Chỉnh sửa tự do trước khi tạo.
+    </p>
   </div>
 
-  <!-- ── CREATE BUTTON ──────────────────────────────────────────────── -->
-  <div class="full-width">
-    <button class="btn-primary" id="btnStart" onclick="startBatch()" disabled>
-      🚀 Tạo video
-    </button>
-  </div>
+  <!-- Create button -->
+  <button class="btn-primary" id="btnStart" onclick="startBatch()" disabled>
+    🚀 Tạo video
+  </button>
 
-  <!-- ── PROGRESS ───────────────────────────────────────────────────── -->
-  <div class="card full-width" id="progressSection">
+</main>
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     TAB 3 — TIẾN TRÌNH
+════════════════════════════════════════════════════ -->
+<div id="tab-progress" class="page">
+<main>
+  <div class="card" id="progressCard">
     <div class="card-title" style="justify-content:space-between">
       <span>⏳ Tiến trình</span>
-      <button class="btn btn-green" id="btnDownloadAll" style="display:none;padding:6px 14px;font-size:12px" onclick="downloadAll()">
+      <button class="btn btn-green" id="btnDlAll" style="display:none;padding:6px 14px;font-size:12px" onclick="downloadAll()">
         ⬇ Tải tất cả
       </button>
     </div>
-    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressBarFill"></div></div>
-    <div class="progress-summary" id="progressSummary">Đang khởi động...</div>
+    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressFill"></div></div>
+    <div class="progress-summary" id="progressSummary">Chưa có batch nào chạy.</div>
     <div class="progress-grid" id="progressGrid"></div>
   </div>
-
 </main>
+</div>
 
-<!-- Preview modal -->
-<div class="modal-backdrop" id="previewModal">
+<!-- Modal preview -->
+<div class="modal-bd" id="modalBd">
   <div class="modal">
-    <div class="modal-header">
-      <span class="modal-title" id="modalTitle">Xem trước video</span>
+    <div class="modal-hdr">
+      <span class="modal-title" id="modalTitle">Xem video</span>
       <button class="modal-close" onclick="closeModal()">×</button>
     </div>
     <video id="modalVideo" controls playsinline></video>
@@ -617,182 +563,231 @@
 </div>
 
 <script>
-const API_BASE = window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:3000';
+const API = window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:3000';
 
-// ── State ────────────────────────────────────────────────────────────────────
-const S = {
-  driveConnected: false,
-  folderId: '',
-  apiKey: '',
-  contentRows: [],    // [{title, subtitle}]
-  currentBatch: null, // batch payload for status updates
-};
-
-// ── Init ─────────────────────────────────────────────────────────────────────
-function init() {
-  const fid = localStorage.getItem('driveFolderId') || '';
-  const ak  = localStorage.getItem('driveApiKey')   || '';
-  if (fid) document.getElementById('driveFolderId').value = fid;
-  if (ak)  document.getElementById('driveApiKey').value   = ak;
-
-  document.getElementById('keepOrigAudio').addEventListener('change', function() {
-    document.getElementById('origVolRow').style.opacity = this.checked ? '1' : '.4';
+// ─── Tabs ─────────────────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    if (b.textContent.toLowerCase().includes(
+      name === 'sources' ? 'nguồn' : name === 'batch' ? 'tạo' : 'tiến'
+    )) b.classList.add('active');
   });
-
-  // Music drop zone drag events
-  const mz = document.getElementById('musicZone');
-  mz.addEventListener('dragover', e => { e.preventDefault(); mz.classList.add('drag-over'); });
-  mz.addEventListener('dragleave', () => mz.classList.remove('drag-over'));
-  mz.addEventListener('drop', e => { e.preventDefault(); mz.classList.remove('drag-over'); const f = e.dataTransfer.files[0]; if (f) setMusicFile(f); });
-
-  updatePreview();
+  if (name === 'sources') loadSources();
+  if (name === 'batch')   checkSourceCount();
 }
 
-// ── Drive ─────────────────────────────────────────────────────────────────────
-async function testDrive() {
-  const fid = document.getElementById('driveFolderId').value.trim();
-  const ak  = document.getElementById('driveApiKey').value.trim();
-  if (!fid || !ak) return showDriveStatus('Vui lòng nhập Folder ID và API Key', false);
+// ─── Source Management ────────────────────────────────────────────────────────
+let sourceFiles = [];
 
-  const btn = document.getElementById('btnTestDrive');
-  btn.disabled = true; btn.textContent = '⏳ Đang kiểm tra...';
-
+async function loadSources() {
   try {
-    const res  = await fetch(`${API_BASE}/api/drive/list?folderId=${encodeURIComponent(fid)}&apiKey=${encodeURIComponent(ak)}`);
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
-
-    S.driveConnected = true; S.folderId = fid; S.apiKey = ak;
-    localStorage.setItem('driveFolderId', fid);
-    localStorage.setItem('driveApiKey',   ak);
-    showDriveStatus(`✓ Kết nối thành công — tìm thấy ${data.count} video`, true);
-    updateStartBtn();
-  } catch (e) {
-    S.driveConnected = false;
-    showDriveStatus('✗ ' + e.message, false);
-    updateStartBtn();
-  } finally {
-    btn.disabled = false; btn.textContent = 'Kiểm tra kết nối';
+    const data = await apiFetch('/api/sources');
+    sourceFiles = data.files || [];
+    renderSources();
+  } catch(e) {
+    console.error(e);
   }
 }
 
-function showDriveStatus(msg, ok) {
-  const el = document.getElementById('driveStatus');
-  el.textContent = msg;
-  el.className = 'drive-status ' + (ok ? 'success' : 'error');
-  el.style.display = 'block';
+function renderSources() {
+  const count = sourceFiles.length;
+  document.getElementById('sourceCountBadge').textContent = count ? `${count} video` : '';
+  const empty = document.getElementById('sourceEmpty');
+  const grid  = document.getElementById('sourceGrid');
+  if (!count) {
+    empty.style.display = 'block';
+    grid.style.display  = 'none';
+    return;
+  }
+  empty.style.display = 'none';
+  grid.style.display  = 'grid';
+  grid.innerHTML = sourceFiles.map(f => srcCard(f)).join('');
 }
 
-// ── AI Content Generation ─────────────────────────────────────────────────────
+function srcCard(f) {
+  const n = esc(f.name);
+  const thumbUrl = `${API}/api/sources/thumb/${encodeURIComponent(f.name)}`;
+  return `
+    <div class="src-card" id="src_${n}">
+      <div class="src-thumb-wrap" onclick="previewSource('${n}')">
+        <img class="src-thumb" src="${thumbUrl}"
+          onload="this.nextElementSibling.style.display='none'"
+          onerror="this.style.display='none'">
+        <div class="src-thumb-fallback">🎬</div>
+        <button class="src-play-btn" title="Xem">▶</button>
+      </div>
+      <div class="src-body">
+        <div class="src-name" id="srcname_${n}" title="${n}">${n}</div>
+        <div class="src-meta">${f.sizeMB} MB</div>
+      </div>
+      <div class="src-actions">
+        <button class="src-act-btn rename" onclick="startRename('${n}')" title="Đổi tên">✏️</button>
+        <button class="src-act-btn delete" onclick="deleteSource('${n}')" title="Xóa">🗑️</button>
+      </div>
+    </div>`;
+}
+
+async function handleUpload(files) {
+  if (!files.length) return;
+  const bar    = document.getElementById('uploadProgressBar');
+  const fill   = document.getElementById('uploadProgressFill');
+  const status = document.getElementById('uploadStatus');
+  bar.style.display    = 'block';
+  status.style.display = 'block';
+
+  for (let i = 0; i < files.length; i++) {
+    const f = files[i];
+    status.textContent = `Đang upload (${i+1}/${files.length}): ${f.name}`;
+    fill.style.width   = '0%';
+    await uploadOneFile(f, pct => { fill.style.width = pct + '%'; });
+  }
+
+  status.textContent = '✓ Upload xong!';
+  fill.style.width   = '100%';
+  setTimeout(() => {
+    bar.style.display    = 'none';
+    status.style.display = 'none';
+  }, 1500);
+
+  await loadSources();
+  // Reset input so same files can be selected again
+  document.getElementById('uploadInput').value = '';
+}
+
+function uploadOneFile(file, onProgress) {
+  return new Promise((resolve, reject) => {
+    const fd = new FormData();
+    fd.append('video', file);
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `${API}/api/sources/upload`);
+    xhr.upload.onprogress = e => { if (e.lengthComputable) onProgress(Math.round(e.loaded/e.total*100)); };
+    xhr.onload    = () => resolve(JSON.parse(xhr.responseText));
+    xhr.onerror   = () => reject(new Error('Upload thất bại'));
+    xhr.send(fd);
+  });
+}
+
+function startRename(filename) {
+  const nameEl = document.getElementById(`srcname_${filename}`);
+  if (!nameEl) return;
+  const ext  = filename.split('.').pop();
+  const base = filename.slice(0, -(ext.length + 1));
+
+  nameEl.innerHTML = `<input class="src-name-input" id="rename_input" value="${esc(base)}"
+    onkeydown="if(event.key==='Enter')commitRename('${filename}',this.value);if(event.key==='Escape')cancelRename('${filename}')"
+    onblur="commitRename('${filename}',this.value)">`;
+  const inp = document.getElementById('rename_input');
+  inp.focus(); inp.select();
+}
+
+async function commitRename(oldName, newBase) {
+  const ext     = oldName.split('.').pop();
+  const newName = newBase.trim() + '.' + ext;
+  if (!newBase.trim() || newName === oldName) return cancelRename(oldName);
+  try {
+    const data = await apiFetch(`/api/sources/${encodeURIComponent(oldName)}`, {
+      method: 'PATCH', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ newName }),
+    });
+    if (data.error) throw new Error(data.error);
+    await loadSources();
+  } catch(e) {
+    alert('Lỗi đổi tên: ' + e.message);
+    cancelRename(oldName);
+  }
+}
+
+function cancelRename(filename) {
+  const nameEl = document.getElementById(`srcname_${filename}`);
+  if (nameEl) nameEl.textContent = filename;
+}
+
+async function deleteSource(filename) {
+  if (!confirm(`Xóa video "${filename}"?`)) return;
+  try {
+    await apiFetch(`/api/sources/${encodeURIComponent(filename)}`, { method: 'DELETE' });
+    await loadSources();
+  } catch(e) {
+    alert('Lỗi: ' + e.message);
+  }
+}
+
+function previewSource(filename) {
+  openModal('Nguồn: ' + filename, `${API}/api/sources/video/${encodeURIComponent(filename)}`);
+}
+
+// ─── Batch tab ────────────────────────────────────────────────────────────────
+async function checkSourceCount() {
+  try {
+    const data = await apiFetch('/api/sources');
+    const warn = document.getElementById('noSourceWarning');
+    warn.style.display = data.count ? 'none' : 'block';
+    updateStartBtn();
+  } catch {}
+}
+
+// ─── AI Content ───────────────────────────────────────────────────────────────
+let contentRows = [];
+
 async function generateContent() {
-  const baseTitle    = document.getElementById('baseTitle').value.trim();
-  const baseSubtitle = document.getElementById('baseSubtitle').value.trim();
-  const count        = parseInt(document.getElementById('videoCount').value) || 5;
-  if (!baseTitle) return alert('Vui lòng nhập tiêu đề gốc trước');
+  const title = document.getElementById('baseTitle').value.trim();
+  const sub   = document.getElementById('baseSubtitle').value.trim();
+  const count = parseInt(document.getElementById('videoCount').value) || 5;
+  if (!title) return alert('Hãy nhập tiêu đề gốc trước');
 
   const btn = document.getElementById('btnGenerate');
-  btn.disabled = true; btn.textContent = '⏳ Đang tạo nội dung...';
+  btn.disabled = true; btn.textContent = '⏳ Đang tạo...';
 
   try {
-    const res  = await fetch(`${API_BASE}/api/content/generate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ baseTitle, baseSubtitle, count }),
+    const data = await apiFetch('/api/content/generate', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ baseTitle: title, baseSubtitle: sub, count }),
     });
-    const data = await res.json();
     if (data.error) throw new Error(data.error);
-
-    S.contentRows = data.variations;
+    contentRows = data.variations;
     renderTable();
     document.getElementById('contentTableCard').style.display = 'block';
-    document.getElementById('contentTableCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     updateStartBtn();
-  } catch (e) {
-    alert('Lỗi tạo nội dung: ' + e.message);
+  } catch(e) {
+    alert('Lỗi: ' + e.message);
   } finally {
     btn.disabled = false; btn.textContent = '✨ Đề xuất nội dung AI';
   }
 }
 
-// ── Content Table ─────────────────────────────────────────────────────────────
 function renderTable() {
-  const tbody = document.getElementById('contentTableBody');
-  tbody.innerHTML = '';
-  S.contentRows.forEach((row, i) => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td class="row-num">${i + 1}</td>
-      <td><input class="content-input" type="text" value="${esc(row.title)}"    oninput="S.contentRows[${i}].title=this.value;updateStartBtn()"></td>
-      <td><input class="content-input" type="text" value="${esc(row.subtitle||'')}" oninput="S.contentRows[${i}].subtitle=this.value"></td>
-      <td><button class="btn-del" onclick="removeRow(${i})" title="Xóa">×</button></td>
-    `;
-    tbody.appendChild(tr);
-  });
+  document.getElementById('contentBody').innerHTML = contentRows.map((r, i) => `
+    <tr>
+      <td class="row-num">${i+1}</td>
+      <td><input class="ci" type="text" value="${esc(r.title)}"    oninput="contentRows[${i}].title=this.value;updateStartBtn()"></td>
+      <td><input class="ci" type="text" value="${esc(r.subtitle||'')}" oninput="contentRows[${i}].subtitle=this.value"></td>
+      <td><button class="btn-del" onclick="removeRow(${i})">×</button></td>
+    </tr>`).join('');
   updateStartBtn();
 }
 
-function removeRow(i) {
-  S.contentRows.splice(i, 1);
-  renderTable();
-}
-
+function removeRow(i) { contentRows.splice(i,1); renderTable(); }
 function addRow() {
-  S.contentRows.push({ title: '', subtitle: '' });
+  contentRows.push({ title:'', subtitle:'' });
   renderTable();
-  // Focus the new title input
-  const rows = document.querySelectorAll('#contentTableBody tr');
-  if (rows.length) rows[rows.length - 1].querySelector('.content-input')?.focus();
+  const rows = document.querySelectorAll('#contentBody tr');
+  rows[rows.length-1]?.querySelector('.ci')?.focus();
 }
 
-function esc(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+// ─── Batch Start ──────────────────────────────────────────────────────────────
+let currentBatch = null;
 
-// ── Music ─────────────────────────────────────────────────────────────────────
-function onMusicSelect(input) { if (input.files[0]) setMusicFile(input.files[0]); }
-function setMusicFile(file) {
-  document.getElementById('musicZone').classList.add('has-file');
-  document.getElementById('musicFileName').textContent = file.name;
-}
-
-// ── Preview ───────────────────────────────────────────────────────────────────
-function updatePreview() {
-  const title    = document.getElementById('baseTitle').value || 'TIÊU ĐỀ VIDEO';
-  const sub      = document.getElementById('baseSubtitle').value || '';
-  const opacity  = parseFloat(document.getElementById('overlayOpacity').value);
-  const tc       = document.getElementById('titleColor').value;
-  const sc       = document.getElementById('subColor').value;
-  const textY    = document.getElementById('textY').value;
-
-  document.getElementById('previewOverlay').style.background = `rgba(0,0,0,${opacity * 0.75})`;
-  document.getElementById('previewTitle').style.color  = tc;
-  document.getElementById('previewTitle').textContent  = title.toUpperCase();
-  document.getElementById('previewSub').style.color    = sc;
-  document.getElementById('previewSub').textContent    = sub ? `(${sub})` : '';
-  document.getElementById('previewSub').style.display  = sub ? 'block' : 'none';
-  document.querySelector('.phone-text').style.top      = textY + '%';
-}
-
-// ── Slider helper ─────────────────────────────────────────────────────────────
-function sv(el, valId) {
-  const v = parseFloat(el.value);
-  document.getElementById(valId).textContent = el.id === 'textY' ? v + '%' : v;
-}
-
-// ── Batch Start ───────────────────────────────────────────────────────────────
 async function startBatch() {
-  if (!S.driveConnected) return alert('Vui lòng kết nối Google Drive trước');
-  const validItems = S.contentRows.filter(r => r.title?.trim());
-  if (!validItems.length) return alert('Cần có ít nhất 1 video với tiêu đề');
+  const valid = contentRows.filter(r => r.title?.trim());
+  if (!valid.length) return alert('Cần có ít nhất 1 video với tiêu đề');
 
   const fd = new FormData();
-  fd.append('folderId', S.folderId);
-  fd.append('apiKey',   S.apiKey);
-  fd.append('items',    JSON.stringify(validItems));
-
-  const musicFile = document.getElementById('musicFile').files[0];
-  if (musicFile) fd.append('music', musicFile);
-
+  fd.append('items', JSON.stringify(valid));
+  const mf = document.getElementById('musicFile').files[0];
+  if (mf) fd.append('music', mf);
   fd.append('overlayOpacity', document.getElementById('overlayOpacity').value);
   fd.append('textY',          document.getElementById('textY').value);
   fd.append('titleFontSize',  document.getElementById('titleFontSize').value);
@@ -805,154 +800,186 @@ async function startBatch() {
   fd.append('maxChars',       document.getElementById('maxChars').value);
 
   const btn = document.getElementById('btnStart');
-  btn.disabled = true; btn.textContent = '⏳ Đang tạo...';
+  btn.disabled = true; btn.textContent = '⏳ Đang khởi động...';
 
   try {
-    const res  = await fetch(`${API_BASE}/api/batch`, { method: 'POST', body: fd });
-    const data = await res.json();
+    const data = await apiFetch('/api/batch', { method:'POST', body: fd });
     if (data.error) throw new Error(data.error);
-
-    initProgressUI(validItems);
+    initProgressUI(valid, data.batchId);
+    switchTab('progress');
     listenBatch(data.batchId);
-  } catch (e) {
+  } catch(e) {
     alert('Lỗi: ' + e.message);
     btn.disabled = false; btn.textContent = '🚀 Tạo video';
   }
 }
 
-// ── Progress UI ───────────────────────────────────────────────────────────────
-function initProgressUI(items) {
-  const sec  = document.getElementById('progressSection');
-  const grid = document.getElementById('progressGrid');
-  sec.style.display = 'block';
-  sec.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-
-  grid.innerHTML = items.map((it, i) => `
-    <div class="progress-item" id="pi_${i}">
-      <div class="pi-num">Video ${i + 1}</div>
-      <div class="pi-title" title="${esc(it.title)}">${esc(it.title)}</div>
-      <div class="pi-sub">${esc(it.subtitle || '—')}</div>
-      <div class="pi-status wait" id="pi_status_${i}">⏸ Chờ xử lý...</div>
-      <div class="pi-actions" id="pi_actions_${i}"></div>
-    </div>
-  `).join('');
-
-  document.getElementById('progressBarFill').style.width = '0%';
+// ─── Progress ─────────────────────────────────────────────────────────────────
+function initProgressUI(items, batchId) {
+  document.getElementById('btnDlAll').style.display   = 'none';
+  document.getElementById('progressFill').style.width = '0%';
   document.getElementById('progressSummary').textContent = `0/${items.length} video hoàn thành`;
-  document.getElementById('btnDownloadAll').style.display = 'none';
+  document.getElementById('progressGrid').innerHTML = items.map((it, i) => `
+    <div class="pi" id="pi_${i}">
+      <div class="pi-num">Video ${i+1}</div>
+      <div class="pi-title" title="${esc(it.title)}">${esc(it.title)}</div>
+      <div class="pi-sub">${esc(it.subtitle||'—')}</div>
+      <div class="pi-st wait" id="pi_st_${i}">⏸ Chờ xử lý...</div>
+      <div class="pi-acts" id="pi_ac_${i}"></div>
+    </div>`).join('');
 }
 
 function updateProgressUI(data) {
-  const pct = data.total ? Math.round((data.done / data.total) * 100) : 0;
-  document.getElementById('progressBarFill').style.width = pct + '%';
+  const pct = data.total ? Math.round(data.done/data.total*100) : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
   document.getElementById('progressSummary').textContent = `${data.done}/${data.total} video hoàn thành`;
 
-  data.items.forEach((item, i) => {
-    const card    = document.getElementById(`pi_${i}`);
-    const statusEl = document.getElementById(`pi_status_${i}`);
-    const actionsEl = document.getElementById(`pi_actions_${i}`);
+  data.items.forEach((it, i) => {
+    const card = document.getElementById(`pi_${i}`);
+    const st   = document.getElementById(`pi_st_${i}`);
+    const ac   = document.getElementById(`pi_ac_${i}`);
     if (!card) return;
-
-    card.className = `progress-item ${item.status}`;
-
-    if (item.status === 'done') {
-      statusEl.className = 'pi-status ok';
-      statusEl.textContent = `✓ Xong · ${item.sizeMB} MB`;
-      actionsEl.innerHTML = `
-        <button class="btn btn-green" onclick="downloadVideo('${item.file}')">⬇ Tải về</button>
-        <button class="btn btn-ghost" onclick="previewVideo('${item.file}', ${i + 1})">▶ Xem</button>
-      `;
-    } else if (item.status === 'processing') {
-      statusEl.className = 'pi-status spin';
-      statusEl.innerHTML = '<span class="spin-icon">⚙</span> Đang xử lý...';
-      actionsEl.innerHTML = '';
-    } else if (item.status === 'error') {
-      statusEl.className = 'pi-status fail';
-      statusEl.textContent = '✗ Lỗi — ' + (item.error || 'không rõ nguyên nhân');
-      actionsEl.innerHTML = '';
+    card.className = 'pi ' + it.status;
+    if (it.status === 'done') {
+      st.className = 'pi-st ok';
+      st.textContent = `✓ Xong · ${it.sizeMB} MB`;
+      ac.innerHTML = `
+        <button class="btn btn-green" onclick="dlVideo('${it.file}')">⬇ Tải về</button>
+        <button class="btn btn-ghost" onclick="previewOutput('${it.file}',${i+1})">▶ Xem</button>`;
+    } else if (it.status === 'processing') {
+      st.className = 'pi-st spin';
+      st.innerHTML = '<span class="spin-icon">⚙</span> Đang xử lý...';
+      ac.innerHTML = '';
+    } else if (it.status === 'error') {
+      st.className = 'pi-st fail';
+      st.textContent = '✗ ' + (it.error || 'Lỗi không xác định');
+      ac.innerHTML = '';
     } else {
-      statusEl.className = 'pi-status wait';
-      statusEl.textContent = '⏸ Chờ xử lý...';
+      st.className = 'pi-st wait';
+      st.textContent = '⏸ Chờ xử lý...';
     }
   });
 
   if (data.status !== 'processing') {
     const btn = document.getElementById('btnStart');
     btn.disabled = false; btn.textContent = '🚀 Tạo video mới';
-
-    if (data.done > 0) {
-      document.getElementById('btnDownloadAll').style.display = 'inline-flex';
-    }
+    if (data.done > 0) document.getElementById('btnDlAll').style.display = 'inline-flex';
   }
+  currentBatch = data;
 }
 
 function listenBatch(batchId) {
-  S.currentBatchId = batchId;
-  const es = new EventSource(`${API_BASE}/api/batch/${batchId}/status`);
+  const es = new EventSource(`${API}/api/batch/${batchId}/status`);
   es.onmessage = e => {
-    const data = JSON.parse(e.data);
-    S.currentBatch = data;
-    updateProgressUI(data);
-    if (data.status !== 'processing') es.close();
+    const d = JSON.parse(e.data);
+    updateProgressUI(d);
+    if (d.status !== 'processing') es.close();
   };
-  es.onerror = () => {
-    es.close();
-    // Fallback polling
-    const iv = setInterval(async () => {
-      try {
-        const res = await fetch(`${API_BASE}/api/batch/${batchId}/status`, {
-          headers: { Accept: 'application/json' }
-        });
-        // SSE not available — fallback logic would need a separate JSON endpoint
-        clearInterval(iv);
-      } catch {}
-    }, 3000);
-  };
+  es.onerror = () => es.close();
 }
 
-// ── Download ──────────────────────────────────────────────────────────────────
-function downloadVideo(filename) {
+function dlVideo(filename) {
   const a = document.createElement('a');
-  a.href = `${API_BASE}/api/download/${filename}`;
+  a.href = `${API}/api/download/${filename}`;
   a.click();
 }
 
 function downloadAll() {
-  if (!S.currentBatch) return;
-  const done = S.currentBatch.items.filter(i => i.status === 'done');
-  done.forEach((item, idx) => {
-    setTimeout(() => {
-      const a = document.createElement('a');
-      a.href = `${API_BASE}/api/download/${item.file}`;
-      a.click();
-    }, idx * 800);
+  if (!currentBatch) return;
+  currentBatch.items.filter(i => i.status==='done').forEach((it, idx) => {
+    setTimeout(() => { const a=document.createElement('a'); a.href=`${API}/api/download/${it.file}`; a.click(); }, idx*800);
   });
 }
 
-// ── Preview Modal ─────────────────────────────────────────────────────────────
-function previewVideo(filename, num) {
-  document.getElementById('modalTitle').textContent = `Video ${num}`;
-  const v = document.getElementById('modalVideo');
-  v.src = `${API_BASE}/api/preview/${filename}`;
-  v.load(); v.play();
-  document.getElementById('previewModal').classList.add('open');
+function previewOutput(filename, num) {
+  openModal(`Video ${num}`, `${API}/api/preview/${filename}`);
 }
 
+// ─── Misc helpers ─────────────────────────────────────────────────────────────
+function openModal(title, src) {
+  document.getElementById('modalTitle').textContent = title;
+  const v = document.getElementById('modalVideo');
+  v.src = src; v.load(); v.play();
+  document.getElementById('modalBd').classList.add('open');
+}
 function closeModal() {
-  document.getElementById('previewModal').classList.remove('open');
+  document.getElementById('modalBd').classList.remove('open');
   const v = document.getElementById('modalVideo');
   v.pause(); v.src = '';
 }
-document.getElementById('previewModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+document.getElementById('modalBd').addEventListener('click', e => { if (e.target===e.currentTarget) closeModal(); });
 
-// ── Validation ────────────────────────────────────────────────────────────────
 function updateStartBtn() {
-  const hasRows = S.contentRows.some(r => r.title?.trim());
-  document.getElementById('btnStart').disabled = !S.driveConnected || !hasRows;
+  const hasRows = contentRows.some(r => r.title?.trim());
+  document.getElementById('btnStart').disabled = !hasRows;
 }
 
-// ── Boot ──────────────────────────────────────────────────────────────────────
-init();
+function sv(el, vid) {
+  document.getElementById(vid).textContent = el.id==='textY' ? el.value+'%' : el.value;
+}
+
+function onMusicPick(input) {
+  if (!input.files[0]) return;
+  document.getElementById('musicLabel').textContent = input.files[0].name;
+  document.getElementById('musicZone').classList.add('has-file');
+}
+
+function updatePreview() {
+  const title   = document.getElementById('baseTitle').value || 'TIÊU ĐỀ';
+  const sub     = document.getElementById('baseSubtitle').value;
+  const opacity = parseFloat(document.getElementById('overlayOpacity').value);
+  const tc      = document.getElementById('titleColor').value;
+  const sc      = document.getElementById('subColor').value;
+  const ty      = document.getElementById('textY').value;
+  document.getElementById('prevOverlay').style.background = `rgba(0,0,0,${opacity*0.75})`;
+  document.getElementById('prevTitle').style.color = tc;
+  document.getElementById('prevTitle').textContent = title.toUpperCase();
+  document.getElementById('prevSub').style.color = sc;
+  document.getElementById('prevSub').textContent = sub ? `(${sub})` : '';
+  document.getElementById('prevTextWrap').style.top = ty + '%';
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function apiFetch(path, opts) {
+  const res  = await fetch(API + path, opts);
+  const text = await res.text();
+  try { return JSON.parse(text); } catch { throw new Error(text.slice(0,200)); }
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+document.getElementById('keepOrigAudio').addEventListener('change', function() {
+  document.getElementById('origVolRow').style.opacity = this.checked ? '1' : '.4';
+});
+
+// Drag-drop for upload zone
+const uz = document.getElementById('uploadZone');
+uz.addEventListener('dragover', e => { e.preventDefault(); uz.classList.add('drag-over'); });
+uz.addEventListener('dragleave', () => uz.classList.remove('drag-over'));
+uz.addEventListener('drop', e => {
+  e.preventDefault(); uz.classList.remove('drag-over');
+  handleUpload(e.dataTransfer.files);
+});
+
+// Drag-drop for music zone
+const mz = document.getElementById('musicZone');
+mz.addEventListener('dragover', e => { e.preventDefault(); mz.classList.add('drag-over'); });
+mz.addEventListener('dragleave', () => mz.classList.remove('drag-over'));
+mz.addEventListener('drop', e => {
+  e.preventDefault(); mz.classList.remove('drag-over');
+  if (e.dataTransfer.files[0]) {
+    document.getElementById('musicLabel').textContent = e.dataTransfer.files[0].name;
+    mz.classList.add('has-file');
+    const dt = new DataTransfer();
+    dt.items.add(e.dataTransfer.files[0]);
+    document.getElementById('musicFile').files = dt.files;
+  }
+});
+
+updatePreview();
+loadSources();
 </script>
 </body>
 </html>
