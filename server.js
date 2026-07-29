@@ -173,6 +173,7 @@ async function generateContentVariations(baseTitle, baseSubtitle, count) {
     body: JSON.stringify({
       model,
       max_tokens: 2048,
+      stream: false,
       messages: [{
         role: 'user',
         content: `Tạo ${count} biến thể nội dung video ngắn (TikTok/Reels). Giữ chủ đề, đa dạng cách diễn đạt. Chỉ trả về JSON array:
