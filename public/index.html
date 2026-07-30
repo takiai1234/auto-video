@@ -612,6 +612,7 @@ input[type=range]::-webkit-slider-thumb {
     <video id="modalVideo" controls playsinline></video>
   </div>
 </div>
+<audio id="previewAudio" style="display:none"></audio>
 
 <!-- Modal rerender -->
 <div class="modal-bd" id="rerenderModal">
@@ -655,9 +656,12 @@ input[type=range]::-webkit-slider-thumb {
     <hr class="sep">
     <div class="mb">
       <label>Nhạc nền</label>
-      <select id="rrMusicFile" class="ci" style="width:100%">
-        <option value="">— Không có nhạc —</option>
-      </select>
+      <div style="display:flex;gap:6px;align-items:center">
+        <select id="rrMusicFile" class="ci" style="flex:1">
+          <option value="">— Không có nhạc —</option>
+        </select>
+        <button style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);cursor:pointer;padding:6px 10px;font-size:14px;flex-shrink:0;transition:all .15s" onmouseover="this.style.color='var(--green)'" onmouseout="this.style.color='var(--muted)'" onclick="previewMusicInline(document.getElementById('rrMusicFile').value,this)" title="Nghe thử">▶</button>
+      </div>
     </div>
     <button class="btn-primary" id="rrSubmitBtn" onclick="submitRerender()">🔄 Tạo lại</button>
   </div>
@@ -862,7 +866,10 @@ async function generateContent() {
 function musicSelectHTML(selectedFile, rowIdx) {
   const opts = [`<option value="">— Không có nhạc —</option>`]
     .concat(musicFiles.map(f => `<option value="${esc(f.name)}" ${f.name===selectedFile?'selected':''}>${esc(f.name)}</option>`));
-  return `<select class="ci" style="font-size:12px" oninput="contentRows[${rowIdx}].musicFile=this.value">${opts.join('')}</select>`;
+  return `<div style="display:flex;gap:4px;align-items:center">
+    <select class="ci" style="font-size:12px;flex:1" id="msel_${rowIdx}" oninput="contentRows[${rowIdx}].musicFile=this.value">${opts.join('')}</select>
+    <button style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);cursor:pointer;padding:4px 8px;font-size:13px;flex-shrink:0;transition:all .15s" onmouseover="this.style.color='var(--green)'" onmouseout="this.style.color='var(--muted)'" onclick="previewMusicInline(document.getElementById('msel_${rowIdx}').value,this)" title="Nghe thử">▶</button>
+  </div>`;
 }
 
 function renderTable() {
@@ -1123,6 +1130,21 @@ function downloadAll() {
 
 function previewOutput(filename, num) {
   openModal(`Video ${num}`, `${API}/api/preview/${filename}`);
+}
+
+// ─── Music preview (inline) ───────────────────────────────────────────────────
+let _previewBtn = null;
+function previewMusicInline(filename, btn) {
+  const audio = document.getElementById('previewAudio');
+  if (_previewBtn && _previewBtn !== btn) { _previewBtn.textContent = '▶'; }
+  if (!filename) return;
+  if (_previewBtn === btn && !audio.paused) {
+    audio.pause(); btn.textContent = '▶'; _previewBtn = null; return;
+  }
+  audio.src = `${API}/api/music/stream/${encodeURIComponent(filename)}`;
+  audio.load(); audio.play();
+  btn.textContent = '⏸'; _previewBtn = btn;
+  audio.onended = () => { btn.textContent = '▶'; _previewBtn = null; };
 }
 
 // ─── Rerender ─────────────────────────────────────────────────────────────────
