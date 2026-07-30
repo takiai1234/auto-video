@@ -369,26 +369,46 @@ input[type=range]::-webkit-slider-thumb {
 ════════════════════════════════════════════════════ -->
 <div id="tab-sources" class="page">
 <main>
-  <div class="card">
-    <div class="card-title" style="justify-content:space-between">
-      <span>📁 Quản lý video nguồn</span>
-      <span id="sourceCountBadge" style="font-size:12px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0"></span>
+  <div class="card-grid">
+
+    <!-- ── Đi Chơi ──────────────────────────────────── -->
+    <div class="card">
+      <div class="card-title" style="justify-content:space-between">
+        <span>🏖️ Đi Chơi</span>
+        <span id="sourceCountBadge_di-choi" style="font-size:12px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0"></span>
+      </div>
+
+      <div class="source-upload-zone" id="uploadZone_di-choi">
+        <input type="file" id="uploadInput_di-choi" accept="video/*" multiple onchange="handleUpload(this.files,'di-choi')">
+        <div class="dz-icon">📤</div>
+        <div class="dz-label">Kéo thả hoặc click để upload</div>
+        <div class="dz-hint">MP4, MOV, AVI, MKV · Nhiều file cùng lúc</div>
+      </div>
+      <div class="upload-progress-bar" id="uploadProgressBar_di-choi"><div class="upload-progress-fill" id="uploadProgressFill_di-choi"></div></div>
+      <div class="upload-status" id="uploadStatus_di-choi"></div>
+      <div class="source-empty" id="sourceEmpty_di-choi">Chưa có video. Hãy upload video lên.</div>
+      <div class="source-grid" id="sourceGrid_di-choi" style="display:none"></div>
     </div>
 
-    <div class="source-upload-zone" id="uploadZone">
-      <input type="file" id="uploadInput" accept="video/*" multiple onchange="handleUpload(this.files)">
-      <div class="dz-icon">📤</div>
-      <div class="dz-label">Kéo thả hoặc click để upload video nguồn</div>
-      <div class="dz-hint">MP4, MOV, AVI, MKV · Nhiều file cùng lúc · Không giới hạn dung lượng</div>
+    <!-- ── Đi Làm ────────────────────────────────────── -->
+    <div class="card">
+      <div class="card-title" style="justify-content:space-between">
+        <span>💼 Đi Làm</span>
+        <span id="sourceCountBadge_di-lam" style="font-size:12px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0"></span>
+      </div>
+
+      <div class="source-upload-zone" id="uploadZone_di-lam">
+        <input type="file" id="uploadInput_di-lam" accept="video/*" multiple onchange="handleUpload(this.files,'di-lam')">
+        <div class="dz-icon">📤</div>
+        <div class="dz-label">Kéo thả hoặc click để upload</div>
+        <div class="dz-hint">MP4, MOV, AVI, MKV · Nhiều file cùng lúc</div>
+      </div>
+      <div class="upload-progress-bar" id="uploadProgressBar_di-lam"><div class="upload-progress-fill" id="uploadProgressFill_di-lam"></div></div>
+      <div class="upload-status" id="uploadStatus_di-lam"></div>
+      <div class="source-empty" id="sourceEmpty_di-lam">Chưa có video. Hãy upload video lên.</div>
+      <div class="source-grid" id="sourceGrid_di-lam" style="display:none"></div>
     </div>
 
-    <div class="upload-progress-bar" id="uploadProgressBar"><div class="upload-progress-fill" id="uploadProgressFill"></div></div>
-    <div class="upload-status" id="uploadStatus"></div>
-
-    <div id="sourceList">
-      <div class="source-empty" id="sourceEmpty">Chưa có video nguồn nào. Hãy upload video lên.</div>
-      <div class="source-grid" id="sourceGrid" style="display:none"></div>
-    </div>
   </div>
 </main>
 </div>
@@ -442,6 +462,21 @@ input[type=range]::-webkit-slider-thumb {
     <!-- Batch setup -->
     <div class="card">
       <div class="card-title">📋 Nội dung</div>
+
+      <div class="mb">
+        <label>Nguồn video</label>
+        <div style="display:flex;gap:20px;flex-wrap:wrap;padding:4px 0">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text)">
+            <input type="radio" name="sourceCategory" value="" checked> Tất cả
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text)">
+            <input type="radio" name="sourceCategory" value="di-choi"> 🏖️ Đi Chơi
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text)">
+            <input type="radio" name="sourceCategory" value="di-lam"> 💼 Đi Làm
+          </label>
+        </div>
+      </div>
 
       <div class="mb">
         <label>Số lượng video</label>
@@ -685,39 +720,42 @@ function switchTab(name) {
 }
 
 // ─── Source Management ────────────────────────────────────────────────────────
-let sourceFiles = [];
+const SOURCE_CATS = [
+  { key: 'di-choi', label: '🏖️ Đi Chơi' },
+  { key: 'di-lam',  label: '💼 Đi Làm' },
+];
 
 async function loadSources() {
   try {
     const data = await apiFetch('/api/sources');
-    sourceFiles = data.files || [];
-    renderSources();
+    renderSources(data.categories || {});
   } catch(e) {
     console.error(e);
   }
 }
 
-function renderSources() {
-  const count = sourceFiles.length;
-  document.getElementById('sourceCountBadge').textContent = count ? `${count} video` : '';
-  const empty = document.getElementById('sourceEmpty');
-  const grid  = document.getElementById('sourceGrid');
-  if (!count) {
-    empty.style.display = 'block';
-    grid.style.display  = 'none';
-    return;
-  }
-  empty.style.display = 'none';
-  grid.style.display  = 'grid';
-  grid.innerHTML = sourceFiles.map(f => srcCard(f)).join('');
+function renderSources(categories) {
+  SOURCE_CATS.forEach(({ key }) => {
+    const files = categories[key] || [];
+    const badge = document.getElementById(`sourceCountBadge_${key}`);
+    const empty = document.getElementById(`sourceEmpty_${key}`);
+    const grid  = document.getElementById(`sourceGrid_${key}`);
+    if (badge) badge.textContent = files.length ? `${files.length} video` : '';
+    if (!empty || !grid) return;
+    if (!files.length) { empty.style.display = 'block'; grid.style.display = 'none'; return; }
+    empty.style.display = 'none';
+    grid.style.display  = 'grid';
+    grid.innerHTML = files.map(f => srcCard(f)).join('');
+  });
 }
 
 function srcCard(f) {
-  const n = esc(f.name);
-  const thumbUrl = `${API}/api/sources/thumb/${encodeURIComponent(f.name)}`;
+  const n   = esc(f.name);
+  const cat = f.category;
+  const thumbUrl = `${API}/api/sources/thumb/${encodeURIComponent(f.name)}?cat=${cat}`;
   return `
-    <div class="src-card" id="src_${n}">
-      <div class="src-thumb-wrap" onclick="previewSource('${n}')">
+    <div class="src-card" id="src_${cat}_${n}">
+      <div class="src-thumb-wrap" onclick="previewSource('${n}','${cat}')">
         <img class="src-thumb" src="${thumbUrl}"
           onload="this.nextElementSibling.style.display='none'"
           onerror="this.style.display='none'">
@@ -725,21 +763,21 @@ function srcCard(f) {
         <button class="src-play-btn" title="Xem">▶</button>
       </div>
       <div class="src-body">
-        <div class="src-name" id="srcname_${n}" title="${n}">${n}</div>
+        <div class="src-name" id="srcname_${cat}_${n}" title="${n}">${n}</div>
         <div class="src-meta">${f.sizeMB} MB</div>
       </div>
       <div class="src-actions">
-        <button class="src-act-btn rename" onclick="startRename('${n}')" title="Đổi tên">✏️</button>
-        <button class="src-act-btn delete" onclick="deleteSource('${n}')" title="Xóa">🗑️</button>
+        <button class="src-act-btn rename" onclick="startRename('${n}','${cat}')" title="Đổi tên">✏️</button>
+        <button class="src-act-btn delete" onclick="deleteSource('${n}','${cat}')" title="Xóa">🗑️</button>
       </div>
     </div>`;
 }
 
-async function handleUpload(files) {
+async function handleUpload(files, cat) {
   if (!files.length) return;
-  const bar    = document.getElementById('uploadProgressBar');
-  const fill   = document.getElementById('uploadProgressFill');
-  const status = document.getElementById('uploadStatus');
+  const bar    = document.getElementById(`uploadProgressBar_${cat}`);
+  const fill   = document.getElementById(`uploadProgressFill_${cat}`);
+  const status = document.getElementById(`uploadStatus_${cat}`);
   bar.style.display    = 'block';
   status.style.display = 'block';
 
@@ -747,27 +785,23 @@ async function handleUpload(files) {
     const f = files[i];
     status.textContent = `Đang upload (${i+1}/${files.length}): ${f.name}`;
     fill.style.width   = '0%';
-    await uploadOneFile(f, pct => { fill.style.width = pct + '%'; });
+    await uploadOneFile(f, cat, pct => { fill.style.width = pct + '%'; });
   }
 
   status.textContent = '✓ Upload xong!';
   fill.style.width   = '100%';
-  setTimeout(() => {
-    bar.style.display    = 'none';
-    status.style.display = 'none';
-  }, 1500);
+  setTimeout(() => { bar.style.display = 'none'; status.style.display = 'none'; }, 1500);
 
   await loadSources();
-  // Reset input so same files can be selected again
-  document.getElementById('uploadInput').value = '';
+  document.getElementById(`uploadInput_${cat}`).value = '';
 }
 
-function uploadOneFile(file, onProgress) {
+function uploadOneFile(file, cat, onProgress) {
   return new Promise((resolve, reject) => {
     const fd = new FormData();
     fd.append('video', file);
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', `${API}/api/sources/upload`);
+    xhr.open('POST', `${API}/api/sources/upload?cat=${cat}`);
     xhr.upload.onprogress = e => { if (e.lengthComputable) onProgress(Math.round(e.loaded/e.total*100)); };
     xhr.onload    = () => resolve(JSON.parse(xhr.responseText));
     xhr.onerror   = () => reject(new Error('Upload thất bại'));
@@ -775,25 +809,25 @@ function uploadOneFile(file, onProgress) {
   });
 }
 
-function startRename(filename) {
-  const nameEl = document.getElementById(`srcname_${filename}`);
+function startRename(filename, cat) {
+  const nameEl = document.getElementById(`srcname_${cat}_${filename}`);
   if (!nameEl) return;
   const ext  = filename.split('.').pop();
   const base = filename.slice(0, -(ext.length + 1));
 
   nameEl.innerHTML = `<input class="src-name-input" id="rename_input" value="${esc(base)}"
-    onkeydown="if(event.key==='Enter')commitRename('${filename}',this.value);if(event.key==='Escape')cancelRename('${filename}')"
-    onblur="commitRename('${filename}',this.value)">`;
+    onkeydown="if(event.key==='Enter')commitRename('${filename}','${cat}',this.value);if(event.key==='Escape')cancelRename('${filename}','${cat}')"
+    onblur="commitRename('${filename}','${cat}',this.value)">`;
   const inp = document.getElementById('rename_input');
   inp.focus(); inp.select();
 }
 
-async function commitRename(oldName, newBase) {
+async function commitRename(oldName, cat, newBase) {
   const ext     = oldName.split('.').pop();
   const newName = newBase.trim() + '.' + ext;
-  if (!newBase.trim() || newName === oldName) return cancelRename(oldName);
+  if (!newBase.trim() || newName === oldName) return cancelRename(oldName, cat);
   try {
-    const data = await apiFetch(`/api/sources/${encodeURIComponent(oldName)}`, {
+    const data = await apiFetch(`/api/sources/${encodeURIComponent(oldName)}?cat=${cat}`, {
       method: 'PATCH', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ newName }),
     });
@@ -801,27 +835,27 @@ async function commitRename(oldName, newBase) {
     await loadSources();
   } catch(e) {
     alert('Lỗi đổi tên: ' + e.message);
-    cancelRename(oldName);
+    cancelRename(oldName, cat);
   }
 }
 
-function cancelRename(filename) {
-  const nameEl = document.getElementById(`srcname_${filename}`);
+function cancelRename(filename, cat) {
+  const nameEl = document.getElementById(`srcname_${cat}_${filename}`);
   if (nameEl) nameEl.textContent = filename;
 }
 
-async function deleteSource(filename) {
+async function deleteSource(filename, cat) {
   if (!confirm(`Xóa video "${filename}"?`)) return;
   try {
-    await apiFetch(`/api/sources/${encodeURIComponent(filename)}`, { method: 'DELETE' });
+    await apiFetch(`/api/sources/${encodeURIComponent(filename)}?cat=${cat}`, { method: 'DELETE' });
     await loadSources();
   } catch(e) {
     alert('Lỗi: ' + e.message);
   }
 }
 
-function previewSource(filename) {
-  openModal('Nguồn: ' + filename, `${API}/api/sources/video/${encodeURIComponent(filename)}`);
+function previewSource(filename, cat) {
+  openModal('Nguồn: ' + filename, `${API}/api/sources/video/${encodeURIComponent(filename)}?cat=${cat}`);
 }
 
 // ─── Batch tab ────────────────────────────────────────────────────────────────
@@ -1032,7 +1066,8 @@ async function startBatch() {
   fd.append('musicVolume',    document.getElementById('musicVolume').value);
   fd.append('origVolume',     document.getElementById('origVolume').value);
   fd.append('maxChars',       document.getElementById('maxChars').value);
-  fd.append('duration',       document.getElementById('duration').value);
+  fd.append('duration',        document.getElementById('duration').value);
+  fd.append('sourceCategory', document.querySelector('input[name="sourceCategory"]:checked')?.value || '');
 
   const btn = document.getElementById('btnStart');
   btn.disabled = true; btn.textContent = '⏳ Đang khởi động...';
@@ -1285,13 +1320,16 @@ document.getElementById('keepOrigAudio').addEventListener('change', function() {
   document.getElementById('origVolRow').style.opacity = this.checked ? '1' : '.4';
 });
 
-// Drag-drop for upload zone
-const uz = document.getElementById('uploadZone');
-uz.addEventListener('dragover', e => { e.preventDefault(); uz.classList.add('drag-over'); });
-uz.addEventListener('dragleave', () => uz.classList.remove('drag-over'));
-uz.addEventListener('drop', e => {
-  e.preventDefault(); uz.classList.remove('drag-over');
-  handleUpload(e.dataTransfer.files);
+// Drag-drop for source upload zones (one per category)
+SOURCE_CATS.forEach(({ key }) => {
+  const uz = document.getElementById(`uploadZone_${key}`);
+  if (!uz) return;
+  uz.addEventListener('dragover', e => { e.preventDefault(); uz.classList.add('drag-over'); });
+  uz.addEventListener('dragleave', () => uz.classList.remove('drag-over'));
+  uz.addEventListener('drop', e => {
+    e.preventDefault(); uz.classList.remove('drag-over');
+    handleUpload(e.dataTransfer.files, key);
+  });
 });
 
 // Drag-drop for music upload zone

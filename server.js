@@ -20,7 +20,12 @@ const MUSIC_DIR   = path.join(__dirname, 'music');
 const MUSIC_EXT   = /\.(mp3|aac|wav|m4a|ogg|flac|wma)$/i;
 [UPLOAD_DIR, OUTPUT_DIR, SOURCES_DIR, THUMBS_DIR, MUSIC_DIR].forEach(d => fs.mkdirSync(d, { recursive: true }));
 
-const VIDEO_EXT = /\.(mp4|mov|avi|mkv|webm|m4v|wmv|flv)$/i;
+const VIDEO_EXT   = /\.(mp4|mov|avi|mkv|webm|m4v|wmv|flv)$/i;
+const CATEGORIES  = ['di-choi', 'di-lam'];
+CATEGORIES.forEach(cat => {
+  fs.mkdirSync(path.join(SOURCES_DIR, cat), { recursive: true });
+  fs.mkdirSync(path.join(THUMBS_DIR,  cat), { recursive: true });
+});
 
 const batchJobs = new Map();
 
@@ -43,15 +48,19 @@ const musicStorage = multer.diskStorage({
 });
 const uploadMusic = multer({ storage: musicStorage, limits: { fileSize: 200 * 1024 * 1024 } });
 
-// multer for source videos — saved to sources/
+// multer for source videos — saved to sources/<category>/
 const sourceStorage = multer.diskStorage({
-  destination: SOURCES_DIR,
+  destination: (req, file, cb) => {
+    const cat = CATEGORIES.includes(req.query.cat) ? req.query.cat : CATEGORIES[0];
+    cb(null, path.join(SOURCES_DIR, cat));
+  },
   filename: (req, file, cb) => {
+    const cat  = CATEGORIES.includes(req.query.cat) ? req.query.cat : CATEGORIES[0];
+    const dir  = path.join(SOURCES_DIR, cat);
     const ext  = path.extname(file.originalname);
     const base = path.basename(file.originalname, ext).replace(/[^a-zA-Z0-9._-]/g, '_');
-    let name = base + ext;
-    let i = 1;
-    while (fs.existsSync(path.join(SOURCES_DIR, name))) name = `${base}_${i++}${ext}`;
+    let name = base + ext, i = 1;
+    while (fs.existsSync(path.join(dir, name))) name = `${base}_${i++}${ext}`;
     cb(null, name);
   },
 });
@@ -224,10 +233,17 @@ async function processBatch(batchId) {
   const batch = batchJobs.get(batchId);
   if (!batch) return;
 
-  const sourceFiles = fs.readdirSync(SOURCES_DIR).filter(f => VIDEO_EXT.test(f));
-  if (!sourceFiles.length) {
+  const batchCat = batch.config.sourceCategory;
+  const catList  = (batchCat && CATEGORIES.includes(batchCat)) ? [batchCat] : CATEGORIES;
+  const allSources = [];
+  catList.forEach(c => {
+    fs.readdirSync(path.join(SOURCES_DIR, c)).filter(f => VIDEO_EXT.test(f)).forEach(f => {
+      allSources.push({ file: f, cat: c });
+    });
+  });
+  if (!allSources.length) {
     batch.status = 'error';
-    batch.items.forEach(it => { it.status = 'error'; it.error = 'Chưa có video nguồn trong folder sources/'; });
+    batch.items.forEach(it => { it.status = 'error'; it.error = 'Chưa có video nguồn trong folder đã chọn'; });
     return;
   }
 
@@ -235,8 +251,9 @@ async function processBatch(batchId) {
     const item = batch.items[i];
     item.status = 'processing';
 
-    const sourceFile = sourceFiles[Math.floor(Math.random() * sourceFiles.length)];
-    const videoPath  = path.join(SOURCES_DIR, sourceFile);
+    const picked     = allSources[Math.floor(Math.random() * allSources.length)];
+    const sourceFile = picked.file;
+    const videoPath  = path.join(SOURCES_DIR, picked.cat, sourceFile);
     const assPath    = path.join(UPLOAD_DIR, `${randomUUID()}.ass`);
     const outputPath = path.join(OUTPUT_DIR,  `${batchId}_${i}.mp4`);
 
@@ -284,38 +301,47 @@ async function processBatch(batchId) {
 
 // ─── Source Video Management ──────────────────────────────────────────────────
 
-// List source videos
+// List source videos by category
 app.get('/api/sources', (req, res) => {
   try {
-    const files = fs.readdirSync(SOURCES_DIR)
-      .filter(f => VIDEO_EXT.test(f))
-      .map(f => {
-        const stat = fs.statSync(path.join(SOURCES_DIR, f));
-        const thumbName = f.replace(/\.[^.]+$/, '.jpg');
-        return {
-          name:      f,
-          sizeMB:    (stat.size / 1024 / 1024).toFixed(1),
-          hasThumb:  fs.existsSync(path.join(THUMBS_DIR, thumbName)),
-          createdAt: stat.ctimeMs,
-        };
-      })
-      .sort((a, b) => b.createdAt - a.createdAt);
-    res.json({ files, count: files.length });
+    const categories = {};
+    let count = 0;
+    CATEGORIES.forEach(cat => {
+      const dir   = path.join(SOURCES_DIR, cat);
+      const files = fs.readdirSync(dir)
+        .filter(f => VIDEO_EXT.test(f))
+        .map(f => {
+          const stat      = fs.statSync(path.join(dir, f));
+          const thumbName = f.replace(/\.[^.]+$/, '.jpg');
+          return {
+            name:      f,
+            sizeMB:    (stat.size / 1024 / 1024).toFixed(1),
+            category:  cat,
+            hasThumb:  fs.existsSync(path.join(THUMBS_DIR, cat, thumbName)),
+            createdAt: stat.ctimeMs,
+          };
+        })
+        .sort((a, b) => b.createdAt - a.createdAt);
+      categories[cat] = files;
+      count += files.length;
+    });
+    res.json({ categories, count });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
 });
 
-// Upload source video(s)
+// Upload source video(s) to a category subfolder
 app.post('/api/sources/upload', uploadSource.array('video', 50), async (req, res) => {
+  const cat = CATEGORIES.includes(req.query.cat) ? req.query.cat : CATEGORIES[0];
   if (!req.files?.length) return res.status(400).json({ error: 'Không có file' });
   const results = req.files.map(f => ({
-    name:   f.filename,
-    sizeMB: (fs.statSync(f.path).size / 1024 / 1024).toFixed(1),
+    name:     f.filename,
+    sizeMB:   (fs.statSync(f.path).size / 1024 / 1024).toFixed(1),
+    category: cat,
   }));
-  // Generate thumbnails in background
   req.files.forEach(f => {
-    const thumbPath = path.join(THUMBS_DIR, f.filename.replace(/\.[^.]+$/, '.jpg'));
+    const thumbPath = path.join(THUMBS_DIR, cat, f.filename.replace(/\.[^.]+$/, '.jpg'));
     generateThumbnail(f.path, thumbPath).catch(() => {});
   });
   res.json({ uploaded: results });
@@ -323,17 +349,21 @@ app.post('/api/sources/upload', uploadSource.array('video', 50), async (req, res
 
 // Delete source video
 app.delete('/api/sources/:filename', (req, res) => {
+  const cat  = CATEGORIES.includes(req.query.cat) ? req.query.cat : null;
+  if (!cat) return res.status(400).json({ error: 'Thiếu category' });
   const name = path.basename(req.params.filename);
-  const fp   = path.join(SOURCES_DIR, name);
+  const fp   = path.join(SOURCES_DIR, cat, name);
   if (!fs.existsSync(fp)) return res.status(404).json({ error: 'Không tìm thấy' });
   fs.unlinkSync(fp);
-  const thumb = path.join(THUMBS_DIR, name.replace(/\.[^.]+$/, '.jpg'));
+  const thumb = path.join(THUMBS_DIR, cat, name.replace(/\.[^.]+$/, '.jpg'));
   if (fs.existsSync(thumb)) fs.unlinkSync(thumb);
   res.json({ ok: true });
 });
 
 // Rename source video
 app.patch('/api/sources/:filename', (req, res) => {
+  const cat     = CATEGORIES.includes(req.query.cat) ? req.query.cat : null;
+  if (!cat) return res.status(400).json({ error: 'Thiếu category' });
   const oldName = path.basename(req.params.filename);
   const rawNew  = (req.body.newName || '').trim();
   if (!rawNew) return res.status(400).json({ error: 'Tên không hợp lệ' });
@@ -341,15 +371,15 @@ app.patch('/api/sources/:filename', (req, res) => {
   const ext      = path.extname(oldName);
   const newBase  = rawNew.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9._-]/g, '_');
   const newName  = newBase + ext;
-  const oldPath  = path.join(SOURCES_DIR, oldName);
-  const newPath  = path.join(SOURCES_DIR, newName);
+  const oldPath  = path.join(SOURCES_DIR, cat, oldName);
+  const newPath  = path.join(SOURCES_DIR, cat, newName);
 
   if (!fs.existsSync(oldPath)) return res.status(404).json({ error: 'Không tìm thấy' });
   if (fs.existsSync(newPath) && oldName !== newName) return res.status(409).json({ error: 'Tên đã tồn tại' });
 
   fs.renameSync(oldPath, newPath);
-  const oldThumb = path.join(THUMBS_DIR, oldName.replace(/\.[^.]+$/, '.jpg'));
-  const newThumb = path.join(THUMBS_DIR, newName.replace(/\.[^.]+$/, '.jpg'));
+  const oldThumb = path.join(THUMBS_DIR, cat, oldName.replace(/\.[^.]+$/, '.jpg'));
+  const newThumb = path.join(THUMBS_DIR, cat, newName.replace(/\.[^.]+$/, '.jpg'));
   if (fs.existsSync(oldThumb)) fs.renameSync(oldThumb, newThumb);
 
   res.json({ name: newName });
@@ -357,16 +387,18 @@ app.patch('/api/sources/:filename', (req, res) => {
 
 // Serve thumbnail
 app.get('/api/sources/thumb/:filename', (req, res) => {
+  const cat  = CATEGORIES.includes(req.query.cat) ? req.query.cat : CATEGORIES[0];
   const name = path.basename(req.params.filename).replace(/\.[^.]+$/, '.jpg');
-  const fp   = path.join(THUMBS_DIR, name);
+  const fp   = path.join(THUMBS_DIR, cat, name);
   if (!fs.existsSync(fp)) return res.status(404).end();
   res.sendFile(fp);
 });
 
 // Stream source video (with range support)
 app.get('/api/sources/video/:filename', (req, res) => {
+  const cat  = CATEGORIES.includes(req.query.cat) ? req.query.cat : CATEGORIES[0];
   const name = path.basename(req.params.filename);
-  const fp   = path.join(SOURCES_DIR, name);
+  const fp   = path.join(SOURCES_DIR, cat, name);
   if (!fs.existsSync(fp)) return res.status(404).send('Không tìm thấy');
   streamFile(fp, req, res);
 });
@@ -447,7 +479,8 @@ app.post('/api/batch', uploadMusic.single('music'), (req, res) => {
     return res.status(400).json({ error: 'Cần ít nhất 1 video có tiêu đề' });
   }
 
-  const sourceCount = fs.readdirSync(SOURCES_DIR).filter(f => VIDEO_EXT.test(f)).length;
+  const sourceCount = CATEGORIES.reduce((sum, c) =>
+    sum + fs.readdirSync(path.join(SOURCES_DIR, c)).filter(f => VIDEO_EXT.test(f)).length, 0);
   if (!sourceCount) {
     if (req.file) fs.unlink(req.file.path, () => {});
     return res.status(400).json({ error: 'Chưa có video nguồn. Hãy upload video vào tab Nguồn Video trước.' });
@@ -455,17 +488,18 @@ app.post('/api/batch', uploadMusic.single('music'), (req, res) => {
 
   const body = req.body;
   const config = {
-    overlayOpacity: parseFloat(body.overlayOpacity ?? 0.45),
-    musicVolume:    parseFloat(body.musicVolume    ?? 0.65),
-    keepOrigAudio:  body.keepOrigAudio === 'true',
-    origVolume:     parseFloat(body.origVolume     ?? 0.15),
-    textYPercent:   parseFloat(body.textY          ?? 52),
-    titleFontSize:  parseInt(body.titleFontSize     ?? 52),
-    subFontSize:    parseInt(body.subFontSize        ?? 38),
-    titleColor:     body.titleColor  || '#ffffff',
-    subColor:       body.subColor    || '#ffff00',
-    maxChars:       parseInt(body.maxChars          ?? 26),
-    duration:       parseInt(body.duration          ?? 60)  || 60,
+    overlayOpacity:  parseFloat(body.overlayOpacity  ?? 0.45),
+    musicVolume:     parseFloat(body.musicVolume      ?? 0.65),
+    keepOrigAudio:   body.keepOrigAudio === 'true',
+    origVolume:      parseFloat(body.origVolume       ?? 0.15),
+    textYPercent:    parseFloat(body.textY            ?? 52),
+    titleFontSize:   parseInt(body.titleFontSize      ?? 52),
+    subFontSize:     parseInt(body.subFontSize        ?? 38),
+    titleColor:      body.titleColor  || '#ffffff',
+    subColor:        body.subColor    || '#ffff00',
+    maxChars:        parseInt(body.maxChars           ?? 26),
+    duration:        parseInt(body.duration           ?? 60) || 60,
+    sourceCategory:  CATEGORIES.includes(body.sourceCategory) ? body.sourceCategory : '',
   };
 
   const batchId = randomUUID();
@@ -538,15 +572,23 @@ app.post('/api/rerender', async (req, res) => {
   if (isNaN(idx) || idx < 0 || idx >= batch.items.length)
     return res.status(400).json({ error: 'Index không hợp lệ' });
 
-  const sourceFiles = fs.readdirSync(SOURCES_DIR).filter(f => VIDEO_EXT.test(f));
-  if (!sourceFiles.length) return res.status(400).json({ error: 'Không có video nguồn' });
+  const batchCat = batch.config.sourceCategory;
+  const catList  = (batchCat && CATEGORIES.includes(batchCat)) ? [batchCat] : CATEGORIES;
+  const allSources = [];
+  catList.forEach(c => {
+    fs.readdirSync(path.join(SOURCES_DIR, c)).filter(f => VIDEO_EXT.test(f)).forEach(f => {
+      allSources.push({ file: f, cat: c });
+    });
+  });
+  if (!allSources.length) return res.status(400).json({ error: 'Không có video nguồn' });
 
   const item    = batch.items[idx];
   const oldItem = { ...item };
   item.status   = 'processing';
 
-  const sourceFile = sourceFiles[Math.floor(Math.random() * sourceFiles.length)];
-  const videoPath  = path.join(SOURCES_DIR, sourceFile);
+  const picked     = allSources[Math.floor(Math.random() * allSources.length)];
+  const sourceFile = picked.file;
+  const videoPath  = path.join(SOURCES_DIR, picked.cat, sourceFile);
   const assPath    = path.join(UPLOAD_DIR, `${randomUUID()}.ass`);
   const outputPath = path.join(OUTPUT_DIR, `${batchId}_${idx}.mp4`);
 
