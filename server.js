@@ -150,7 +150,7 @@ function buildFilterComplex(assPath, config, hasMusic) {
 function buildFFmpegArgs(videoPath, musicPath, assPath, config, outputPath) {
   const hasMusic = !!musicPath;
   const { fc, hasAudioOut } = buildFilterComplex(assPath, config, hasMusic);
-  const args = ['-i', videoPath];
+  const args = ['-stream_loop', '-1', '-i', videoPath];
   if (hasMusic) args.push('-stream_loop', '-1', '-i', musicPath);
   args.push('-filter_complex', fc, '-map', '[v]');
   if (hasAudioOut) args.push('-map', '[a]', '-c:a', 'aac', '-b:a', '192k');

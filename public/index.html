@@ -1081,7 +1081,7 @@ function updateProgressUI(data) {
       st.textContent = `✓ Xong · ${it.sizeMB} MB`;
       ac.innerHTML = `
         <button class="btn btn-green" onclick="dlVideo('${it.file}')">⬇ Tải về</button>
-        <button class="btn btn-ghost" onclick="previewOutput('${it.file}',${i+1})">▶ Xem</button>
+        <button class="btn btn-ghost" onclick="previewOutput('${it.file}',${i+1},${it.ts||0})">▶ Xem</button>
         <button class="btn btn-ghost" onclick="openRerenderModal(${i})">✏️ Sửa</button>`;
     } else if (it.status === 'processing') {
       st.className = 'pi-st spin';
@@ -1128,8 +1128,8 @@ function downloadAll() {
   });
 }
 
-function previewOutput(filename, num) {
-  openModal(`Video ${num}`, `${API}/api/preview/${filename}`);
+function previewOutput(filename, num, ts) {
+  openModal(`Video ${num}`, `${API}/api/preview/${filename}${ts ? '?t='+ts : ''}`);
 }
 
 // ─── Music preview (inline) ───────────────────────────────────────────────────
@@ -1213,6 +1213,7 @@ async function submitRerender() {
     item.file     = data.file;
     item.sizeMB   = data.sizeMB;
     item.status   = 'done';
+    item.ts       = Date.now();
     updateProgressUI(currentBatch);
     closeRerenderModal();
   } catch(e) {
