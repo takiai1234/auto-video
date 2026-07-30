@@ -460,6 +460,74 @@ app.get('/api/batch/:batchId/status', (req, res) => {
   req.on('close', () => clearInterval(iv));
 });
 
+// Rerender a single video with updated settings
+app.post('/api/rerender', async (req, res) => {
+  const { batchId, index, title, subtitle, titleColor, subColor, titleFontSize, subFontSize, maxChars } = req.body;
+
+  const batch = batchJobs.get(batchId);
+  if (!batch) return res.status(404).json({ error: 'Batch không tồn tại' });
+
+  const idx = parseInt(index);
+  if (isNaN(idx) || idx < 0 || idx >= batch.items.length)
+    return res.status(400).json({ error: 'Index không hợp lệ' });
+
+  const sourceFiles = fs.readdirSync(SOURCES_DIR).filter(f => VIDEO_EXT.test(f));
+  if (!sourceFiles.length) return res.status(400).json({ error: 'Không có video nguồn' });
+
+  const item    = batch.items[idx];
+  const oldItem = { ...item };
+  item.status   = 'processing';
+
+  const sourceFile = sourceFiles[Math.floor(Math.random() * sourceFiles.length)];
+  const videoPath  = path.join(SOURCES_DIR, sourceFile);
+  const assPath    = path.join(UPLOAD_DIR, `${randomUUID()}.ass`);
+  const outputPath = path.join(OUTPUT_DIR, `${batchId}_${idx}.mp4`);
+
+  const config = {
+    ...batch.config,
+    titleColor:    titleColor    || batch.config.titleColor,
+    subColor:      subColor      || batch.config.subColor,
+    titleFontSize: parseInt(titleFontSize) || batch.config.titleFontSize,
+    subFontSize:   parseInt(subFontSize)   || batch.config.subFontSize,
+    maxChars:      parseInt(maxChars)      || batch.config.maxChars,
+  };
+
+  const newTitle    = (title    ?? item.title).trim();
+  const newSubtitle = (subtitle ?? item.subtitle).trim();
+
+  try {
+    const titleLines = autoWrap(newTitle, config.maxChars);
+    if (!titleLines.length) throw new Error('Tiêu đề trống');
+    generateASS({ ...config, titleLines, subtitle: newSubtitle }, assPath);
+
+    const musicPath = batch.musicPath && fs.existsSync(batch.musicPath) ? batch.musicPath : null;
+    const args = buildFFmpegArgs(videoPath, musicPath, assPath, config, outputPath);
+
+    await new Promise((resolve, reject) => {
+      const proc = spawn(FFMPEG, args, { stdio: ['ignore', 'ignore', 'pipe'] });
+      let stderr = '';
+      proc.stderr.on('data', d => { stderr += d.toString(); });
+      proc.on('close', code => {
+        fs.unlink(assPath, () => {});
+        if (code === 0 && fs.existsSync(outputPath)) resolve();
+        else reject(new Error(stderr.slice(-600)));
+      });
+    });
+
+    item.title      = newTitle;
+    item.subtitle   = newSubtitle;
+    item.status     = 'done';
+    item.file       = `${batchId}_${idx}.mp4`;
+    item.sizeMB     = (fs.statSync(outputPath).size / 1024 / 1024).toFixed(1);
+    item.sourceName = sourceFile;
+    res.json({ file: item.file, sizeMB: item.sizeMB });
+  } catch (err) {
+    Object.assign(item, oldItem);
+    fs.unlink(assPath, () => {});
+    res.status(500).json({ error: err.message.slice(0, 400) });
+  }
+});
+
 // Download output video
 app.get('/api/download/:filename', (req, res) => {
   const filename = path.basename(req.params.filename);

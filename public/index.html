@@ -570,6 +570,50 @@ input[type=range]::-webkit-slider-thumb {
   </div>
 </div>
 
+<!-- Modal rerender -->
+<div class="modal-bd" id="rerenderModal">
+  <div class="modal" style="width:min(560px,95vw)">
+    <div class="modal-hdr">
+      <span class="modal-title">✏️ Chỉnh sửa &amp; Tạo lại</span>
+      <button class="modal-close" onclick="closeRerenderModal()">×</button>
+    </div>
+    <div class="mb">
+      <label>Tiêu đề</label>
+      <textarea id="rrTitle" rows="2"></textarea>
+    </div>
+    <div class="mb">
+      <label>Phụ đề</label>
+      <input type="text" id="rrSubtitle" placeholder="(không có)">
+    </div>
+    <hr class="sep">
+    <div class="color-row">
+      <label>Màu tiêu đề</label>
+      <input type="color" id="rrTitleColor" value="#ffffff">
+    </div>
+    <div class="color-row">
+      <label>Màu phụ đề</label>
+      <input type="color" id="rrSubColor" value="#f5c518">
+    </div>
+    <div class="slider-row">
+      <label>Cỡ chữ tiêu đề</label>
+      <input type="range" id="rrTitleFs" min="28" max="80" step="2" value="52" oninput="document.getElementById('rrTitleFsVal').textContent=this.value">
+      <span class="slider-val" id="rrTitleFsVal">52</span>
+    </div>
+    <div class="slider-row">
+      <label>Cỡ chữ phụ đề</label>
+      <input type="range" id="rrSubFs" min="20" max="60" step="2" value="38" oninput="document.getElementById('rrSubFsVal').textContent=this.value">
+      <span class="slider-val" id="rrSubFsVal">38</span>
+    </div>
+    <div class="slider-row">
+      <label>Ký tự tối đa / dòng</label>
+      <input type="range" id="rrMaxChars" min="14" max="36" step="1" value="26" oninput="document.getElementById('rrMaxCharsVal').textContent=this.value">
+      <span class="slider-val" id="rrMaxCharsVal">26</span>
+    </div>
+    <hr class="sep">
+    <button class="btn-primary" id="rrSubmitBtn" onclick="submitRerender()">🔄 Tạo lại</button>
+  </div>
+</div>
+
 <script>
 const API = window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:3000';
 
@@ -795,6 +839,8 @@ function addRow() {
 
 // ─── Batch Start ──────────────────────────────────────────────────────────────
 let currentBatch = null;
+let currentBatchId = null;
+let rerenderIdx = null;
 
 async function startBatch() {
   const valid = contentRows.filter(r => r.title?.trim());
@@ -822,6 +868,7 @@ async function startBatch() {
   try {
     const data = await apiFetch('/api/batch', { method:'POST', body: fd });
     if (data.error) throw new Error(data.error);
+    currentBatchId = data.batchId;
     initProgressUI(valid, data.batchId);
     switchTab('progress');
     listenBatch(data.batchId);
@@ -862,7 +909,8 @@ function updateProgressUI(data) {
       st.textContent = `✓ Xong · ${it.sizeMB} MB`;
       ac.innerHTML = `
         <button class="btn btn-green" onclick="dlVideo('${it.file}')">⬇ Tải về</button>
-        <button class="btn btn-ghost" onclick="previewOutput('${it.file}',${i+1})">▶ Xem</button>`;
+        <button class="btn btn-ghost" onclick="previewOutput('${it.file}',${i+1})">▶ Xem</button>
+        <button class="btn btn-ghost" onclick="openRerenderModal(${i})">✏️ Sửa</button>`;
     } else if (it.status === 'processing') {
       st.className = 'pi-st spin';
       st.innerHTML = '<span class="spin-icon">⚙</span> Đang xử lý...';
@@ -911,6 +959,82 @@ function downloadAll() {
 function previewOutput(filename, num) {
   openModal(`Video ${num}`, `${API}/api/preview/${filename}`);
 }
+
+// ─── Rerender ─────────────────────────────────────────────────────────────────
+function openRerenderModal(idx) {
+  if (!currentBatch) return;
+  rerenderIdx = idx;
+  const item = currentBatch.items[idx];
+  document.getElementById('rrTitle').value    = item.title || '';
+  document.getElementById('rrSubtitle').value = item.subtitle || '';
+  // Pre-fill visual settings from batch tab
+  const tc = document.getElementById('titleColor').value;
+  const sc = document.getElementById('subColor').value;
+  const tf = document.getElementById('titleFontSize').value;
+  const sf = document.getElementById('subFontSize').value;
+  const mc = document.getElementById('maxChars').value;
+  document.getElementById('rrTitleColor').value         = tc;
+  document.getElementById('rrSubColor').value           = sc;
+  document.getElementById('rrTitleFs').value            = tf;
+  document.getElementById('rrSubFs').value              = sf;
+  document.getElementById('rrMaxChars').value           = mc;
+  document.getElementById('rrTitleFsVal').textContent   = tf;
+  document.getElementById('rrSubFsVal').textContent     = sf;
+  document.getElementById('rrMaxCharsVal').textContent  = mc;
+  document.getElementById('rerenderModal').classList.add('open');
+}
+
+function closeRerenderModal() {
+  document.getElementById('rerenderModal').classList.remove('open');
+}
+
+async function submitRerender() {
+  if (rerenderIdx === null || !currentBatchId) return;
+  const btn = document.getElementById('rrSubmitBtn');
+  btn.disabled = true; btn.textContent = '⏳ Đang tạo...';
+
+  // Show processing state on card
+  currentBatch.items[rerenderIdx].status = 'processing';
+  updateProgressUI(currentBatch);
+
+  try {
+    const data = await apiFetch('/api/rerender', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        batchId:      currentBatchId,
+        index:        rerenderIdx,
+        title:        document.getElementById('rrTitle').value,
+        subtitle:     document.getElementById('rrSubtitle').value,
+        titleColor:   document.getElementById('rrTitleColor').value,
+        subColor:     document.getElementById('rrSubColor').value,
+        titleFontSize:document.getElementById('rrTitleFs').value,
+        subFontSize:  document.getElementById('rrSubFs').value,
+        maxChars:     document.getElementById('rrMaxChars').value,
+      }),
+    });
+    if (data.error) throw new Error(data.error);
+
+    const item = currentBatch.items[rerenderIdx];
+    item.title    = document.getElementById('rrTitle').value;
+    item.subtitle = document.getElementById('rrSubtitle').value;
+    item.file     = data.file;
+    item.sizeMB   = data.sizeMB;
+    item.status   = 'done';
+    updateProgressUI(currentBatch);
+    closeRerenderModal();
+  } catch(e) {
+    currentBatch.items[rerenderIdx].status = 'done';
+    updateProgressUI(currentBatch);
+    alert('Lỗi tạo lại: ' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = '🔄 Tạo lại';
+  }
+}
+
+document.getElementById('rerenderModal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeRerenderModal();
+});
 
 // ─── Misc helpers ─────────────────────────────────────────────────────────────
 function openModal(title, src) {
