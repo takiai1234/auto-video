@@ -92,22 +92,27 @@ function hexToASS(hex) {
 }
 
 function generateASS(config, assPath) {
-  const { titleLines, subtitle, textYPercent, titleFontSize, subFontSize, titleColor, subColor } = config;
+  const { titleLines, subtitle, textYPercent, titleFontSize, subFontSize, titleColor, subColor, maxChars } = config;
   const titleASS = hexToASS(titleColor || '#ffffff');
   const subASS   = hexToASS(subColor   || '#ffff00');
   const lineH    = Math.round(titleFontSize * 1.38);
   const subLineH = Math.round(subFontSize   * 1.38);
-  const totalH   = titleLines.length * lineH + (subtitle ? subLineH + 6 : 0);
+  const subMaxChars = Math.round((maxChars || 26) * (titleFontSize / subFontSize));
+  let subLines = [];
+  if (subtitle) {
+    const rawSub = subtitle.startsWith('(') ? subtitle : `(${subtitle})`;
+    subLines = autoWrap(rawSub, subMaxChars);
+  }
+  const totalH   = titleLines.length * lineH + (subLines.length ? subLines.length * subLineH + 6 : 0);
   const blockTop = Math.round(1920 * textYPercent / 100 - totalH / 2);
   const esc = t => t.replace(/\\/g, '∖').replace(/\{/g, '｛').replace(/\}/g, '｝');
   const dialogues = [];
   titleLines.forEach((line, i) => {
     dialogues.push(`Dialogue: 0,0:00:00.00,2:00:00.00,T,,0,0,${Math.max(0, 1920 - (blockTop + (i+1)*lineH))},,${esc(line)}`);
   });
-  if (subtitle) {
-    const rawSub = subtitle.startsWith('(') ? subtitle : `(${subtitle})`;
-    dialogues.push(`Dialogue: 0,0:00:00.00,2:00:00.00,S,,0,0,${Math.max(0, 1920 - (blockTop + titleLines.length*lineH + 6 + subLineH))},,${esc(rawSub)}`);
-  }
+  subLines.forEach((line, i) => {
+    dialogues.push(`Dialogue: 0,0:00:00.00,2:00:00.00,S,,0,0,${Math.max(0, 1920 - (blockTop + titleLines.length*lineH + 6 + (i+1)*subLineH))},,${esc(line)}`);
+  });
   fs.writeFileSync(assPath, [
     '[Script Info]','ScriptType: v4.00+','PlayResX: 1080','PlayResY: 1920','WrapStyle: 2','',
     '[V4+ Styles]',
