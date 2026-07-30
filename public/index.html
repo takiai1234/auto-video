@@ -509,7 +509,10 @@ input[type=range]::-webkit-slider-thumb {
   <div class="card" id="contentTableCard" style="display:none">
     <div class="card-title" style="justify-content:space-between">
       <span>📝 Danh sách nội dung</span>
-      <button class="btn btn-ghost" onclick="addRow()" style="padding:4px 12px;font-size:12px">+ Thêm</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost" onclick="addRow()" style="padding:4px 12px;font-size:12px">+ Thêm</button>
+        <button class="btn btn-ghost" onclick="resetContent()" style="padding:4px 12px;font-size:12px;color:var(--red);border-color:rgba(239,68,68,.4)">🗑 Reset</button>
+      </div>
     </div>
     <div class="content-table-wrap">
       <table class="content-table">
@@ -775,6 +778,14 @@ function renderTable() {
 }
 
 function removeRow(i) { contentRows.splice(i,1); renderTable(); }
+function resetContent() {
+  contentRows = [];
+  document.getElementById('contentTableCard').style.display = 'none';
+  document.getElementById('baseTitle').value = '';
+  document.getElementById('baseSubtitle').value = '';
+  updatePreview();
+  updateStartBtn();
+}
 function addRow() {
   contentRows.push({ title:'', subtitle:'' });
   renderTable();
