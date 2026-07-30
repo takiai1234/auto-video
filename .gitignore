@@ -1,6 +1,9 @@
 node_modules/
 uploads/
 output/
+music/
+sources/
+thumbnails/
 *.log
 .env
 *.zip

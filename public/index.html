@@ -328,6 +328,24 @@ input[type=range]::-webkit-slider-thumb {
 .sep { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
 .hint { font-size: 11px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
 .row-btns { display: flex; gap: 10px; margin-top: 10px; }
+
+/* ─── Music list ──────────────────────────────────── */
+.music-list { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.music-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; transition: border-color .2s; }
+.music-item:hover { border-color: rgba(245,197,24,.35); }
+.music-item-icon { font-size: 22px; flex-shrink: 0; }
+.music-item-info { flex: 1; min-width: 0; }
+.music-item-name { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.music-item-meta { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.music-item-name-input { width: 100%; background: #0d0f14; border: 1px solid var(--accent); border-radius: 5px; color: var(--text); font-size: 13px; font-weight: 600; padding: 2px 7px; outline: none; }
+.music-item-actions { display: flex; gap: 3px; flex-shrink: 0; }
+.music-act-btn { background: none; border: none; color: var(--muted); cursor: pointer; padding: 5px 8px; border-radius: 6px; font-size: 14px; transition: all .15s; }
+.music-act-btn.play:hover   { color: var(--green);  background: rgba(34,197,94,.07); }
+.music-act-btn.rename:hover { color: var(--accent); background: rgba(245,197,24,.07); }
+.music-act-btn.delete:hover { color: var(--red);    background: rgba(239,68,68,.07); }
+.music-player { margin-top: 14px; padding: 12px; background: #0a0c10; border-radius: 8px; border: 1px solid var(--border); display: none; }
+.music-player-name { font-size: 12px; color: var(--muted); margin-bottom: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.music-player audio { width: 100%; }
 </style>
 </head>
 <body>
@@ -340,6 +358,7 @@ input[type=range]::-webkit-slider-thumb {
   </div>
   <div class="tabs">
     <button class="tab-btn" onclick="switchTab('sources')">📁 Nguồn Video</button>
+    <button class="tab-btn" onclick="switchTab('music')">🎵 Nhạc Nền</button>
     <button class="tab-btn active" onclick="switchTab('batch')">🚀 Tạo Video</button>
     <button class="tab-btn" onclick="switchTab('progress')">📊 Tiến Trình</button>
   </div>
@@ -375,7 +394,39 @@ input[type=range]::-webkit-slider-thumb {
 </div>
 
 <!-- ════════════════════════════════════════════════════
-     TAB 2 — TẠO VIDEO
+     TAB 2 — NHẠC NỀN
+════════════════════════════════════════════════════ -->
+<div id="tab-music" class="page">
+<main>
+  <div class="card">
+    <div class="card-title" style="justify-content:space-between">
+      <span>🎵 Quản lý nhạc nền</span>
+      <span id="musicCountBadge" style="font-size:12px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0"></span>
+    </div>
+
+    <div class="source-upload-zone" id="musicUploadZone">
+      <input type="file" id="musicUploadInput" accept="audio/*" multiple onchange="handleMusicUpload(this.files)">
+      <div class="dz-icon">🎵</div>
+      <div class="dz-label">Kéo thả hoặc click để upload nhạc nền</div>
+      <div class="dz-hint">MP3, AAC, WAV, M4A, OGG · Nhiều file cùng lúc</div>
+    </div>
+
+    <div class="upload-progress-bar" id="musicUploadProgressBar"><div class="upload-progress-fill" id="musicUploadProgressFill"></div></div>
+    <div class="upload-status" id="musicUploadStatus"></div>
+
+    <div class="source-empty" id="musicEmpty">Chưa có nhạc nào. Hãy upload nhạc lên.</div>
+    <div class="music-list" id="musicList" style="display:none"></div>
+
+    <div class="music-player" id="musicPlayer">
+      <div class="music-player-name" id="musicPlayerName"></div>
+      <audio id="musicAudio" controls></audio>
+    </div>
+  </div>
+</main>
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     TAB 3 — TẠO VIDEO
 ════════════════════════════════════════════════════ -->
 <div id="tab-batch" class="page active">
 <main>
@@ -464,15 +515,6 @@ input[type=range]::-webkit-slider-thumb {
     <div class="card">
       <div class="card-title">🎵 Âm thanh</div>
 
-      <div class="mb">
-        <label>Nhạc nền (dùng chung cho tất cả video)</label>
-        <div class="drop-zone" id="musicZone">
-          <input type="file" id="musicFile" accept="audio/*" onchange="onMusicPick(this)">
-          <div class="drop-icon">🎵</div>
-          <div class="drop-label" id="musicLabel">Chọn file nhạc</div>
-          <div class="drop-hint">MP3, AAC, WAV — tuỳ chọn</div>
-        </div>
-      </div>
       <div class="slider-row">
         <label>Âm lượng nhạc</label>
         <input type="range" id="musicVolume" min="0" max="1" step="0.05" value="0.65" oninput="sv(this,'musicVolVal')">
@@ -520,7 +562,8 @@ input[type=range]::-webkit-slider-thumb {
           <tr>
             <th style="width:36px">#</th>
             <th>Tiêu đề</th>
-            <th style="width:36%">Phụ đề</th>
+            <th style="width:28%">Phụ đề</th>
+            <th style="width:190px">Nhạc nền</th>
             <th style="width:36px"></th>
           </tr>
         </thead>
@@ -610,6 +653,12 @@ input[type=range]::-webkit-slider-thumb {
       <span class="slider-val" id="rrMaxCharsVal">26</span>
     </div>
     <hr class="sep">
+    <div class="mb">
+      <label>Nhạc nền</label>
+      <select id="rrMusicFile" class="ci" style="width:100%">
+        <option value="">— Không có nhạc —</option>
+      </select>
+    </div>
     <button class="btn-primary" id="rrSubmitBtn" onclick="submitRerender()">🔄 Tạo lại</button>
   </div>
 </div>
@@ -622,13 +671,13 @@ function switchTab(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
+  const kw = { sources:'nguồn', music:'nhạc', batch:'tạo', progress:'tiến' }[name] || name;
   document.querySelectorAll('.tab-btn').forEach(b => {
-    if (b.textContent.toLowerCase().includes(
-      name === 'sources' ? 'nguồn' : name === 'batch' ? 'tạo' : 'tiến'
-    )) b.classList.add('active');
+    if (b.textContent.toLowerCase().includes(kw)) b.classList.add('active');
   });
   if (name === 'sources') loadSources();
-  if (name === 'batch')   checkSourceCount();
+  if (name === 'music')   loadMusic();
+  if (name === 'batch')   { checkSourceCount(); loadMusic(); }
 }
 
 // ─── Source Management ────────────────────────────────────────────────────────
@@ -799,7 +848,7 @@ async function generateContent() {
       body: JSON.stringify({ baseTitle: title, baseSubtitle: sub, count }),
     });
     if (data.error) throw new Error(data.error);
-    contentRows = data.variations;
+    contentRows = data.variations.map(v => ({ ...v, musicFile: '' }));
     renderTable();
     document.getElementById('contentTableCard').style.display = 'block';
     updateStartBtn();
@@ -810,12 +859,19 @@ async function generateContent() {
   }
 }
 
+function musicSelectHTML(selectedFile, rowIdx) {
+  const opts = [`<option value="">— Không có nhạc —</option>`]
+    .concat(musicFiles.map(f => `<option value="${esc(f.name)}" ${f.name===selectedFile?'selected':''}>${esc(f.name)}</option>`));
+  return `<select class="ci" style="font-size:12px" oninput="contentRows[${rowIdx}].musicFile=this.value">${opts.join('')}</select>`;
+}
+
 function renderTable() {
   document.getElementById('contentBody').innerHTML = contentRows.map((r, i) => `
     <tr>
       <td class="row-num">${i+1}</td>
       <td><input class="ci" type="text" value="${esc(r.title)}"    oninput="contentRows[${i}].title=this.value;updateStartBtn()"></td>
       <td><input class="ci" type="text" value="${esc(r.subtitle||'')}" oninput="contentRows[${i}].subtitle=this.value"></td>
+      <td>${musicSelectHTML(r.musicFile||'', i)}</td>
       <td><button class="btn-del" onclick="removeRow(${i})">×</button></td>
     </tr>`).join('');
   updateStartBtn();
@@ -831,10 +887,121 @@ function resetContent() {
   updateStartBtn();
 }
 function addRow() {
-  contentRows.push({ title:'', subtitle:'' });
+  contentRows.push({ title:'', subtitle:'', musicFile:'' });
   renderTable();
   const rows = document.querySelectorAll('#contentBody tr');
   rows[rows.length-1]?.querySelector('.ci')?.focus();
+}
+
+// ─── Music Library ────────────────────────────────────────────────────────────
+let musicFiles = [];
+
+async function loadMusic() {
+  try {
+    const data = await apiFetch('/api/music');
+    musicFiles = data.files || [];
+    renderMusicList();
+  } catch(e) { console.error(e); }
+}
+
+function renderMusicList() {
+  const count  = musicFiles.length;
+  document.getElementById('musicCountBadge').textContent = count ? `${count} bài` : '';
+  document.getElementById('musicEmpty').style.display  = count ? 'none'  : 'block';
+  const list = document.getElementById('musicList');
+  list.style.display = count ? 'flex' : 'none';
+  list.innerHTML = musicFiles.map(f => musicItemHTML(f)).join('');
+}
+
+function musicItemHTML(f) {
+  const n = esc(f.name);
+  return `<div class="music-item" id="msc_${n}">
+    <div class="music-item-icon">🎵</div>
+    <div class="music-item-info">
+      <div class="music-item-name" id="mscname_${n}" title="${n}">${n}</div>
+      <div class="music-item-meta">${f.sizeMB} MB</div>
+    </div>
+    <div class="music-item-actions">
+      <button class="music-act-btn play"   onclick="previewMusic('${n}')"             title="Nghe thử">▶</button>
+      <button class="music-act-btn rename" onclick="startMusicRename('${n}')"         title="Đổi tên">✏️</button>
+      <button class="music-act-btn delete" onclick="deleteMusic('${n}')"              title="Xóa">🗑️</button>
+    </div>
+  </div>`;
+}
+
+async function handleMusicUpload(files) {
+  if (!files.length) return;
+  const bar = document.getElementById('musicUploadProgressBar');
+  const fill = document.getElementById('musicUploadProgressFill');
+  const status = document.getElementById('musicUploadStatus');
+  bar.style.display = 'block'; status.style.display = 'block';
+  for (let i = 0; i < files.length; i++) {
+    status.textContent = `Đang upload (${i+1}/${files.length}): ${files[i].name}`;
+    fill.style.width = '0%';
+    await uploadOneMusicFile(files[i], pct => { fill.style.width = pct + '%'; });
+  }
+  status.textContent = '✓ Upload xong!'; fill.style.width = '100%';
+  setTimeout(() => { bar.style.display = 'none'; status.style.display = 'none'; }, 1500);
+  await loadMusic();
+  document.getElementById('musicUploadInput').value = '';
+}
+
+function uploadOneMusicFile(file, onProgress) {
+  return new Promise((resolve, reject) => {
+    const fd = new FormData(); fd.append('audio', file);
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `${API}/api/music/upload`);
+    xhr.upload.onprogress = e => { if (e.lengthComputable) onProgress(Math.round(e.loaded/e.total*100)); };
+    xhr.onload  = () => resolve(JSON.parse(xhr.responseText));
+    xhr.onerror = () => reject(new Error('Upload thất bại'));
+    xhr.send(fd);
+  });
+}
+
+function previewMusic(filename) {
+  const player = document.getElementById('musicPlayer');
+  const audio  = document.getElementById('musicAudio');
+  document.getElementById('musicPlayerName').textContent = filename;
+  audio.src = `${API}/api/music/stream/${encodeURIComponent(filename)}`;
+  player.style.display = 'block';
+  audio.load(); audio.play();
+}
+
+function startMusicRename(filename) {
+  const nameEl = document.getElementById(`mscname_${filename}`);
+  if (!nameEl) return;
+  const ext = filename.slice(filename.lastIndexOf('.'));
+  const base = filename.slice(0, filename.lastIndexOf('.'));
+  nameEl.innerHTML = `<input class="music-item-name-input" id="mren_input" value="${esc(base)}"
+    onkeydown="if(event.key==='Enter')commitMusicRename('${filename}',this.value);if(event.key==='Escape')cancelMusicRename('${filename}')"
+    onblur="commitMusicRename('${filename}',this.value)">`;
+  const inp = document.getElementById('mren_input'); inp.focus(); inp.select();
+}
+
+async function commitMusicRename(oldName, newBase) {
+  if (!newBase.trim() || newBase.trim() + oldName.slice(oldName.lastIndexOf('.')) === oldName)
+    return cancelMusicRename(oldName);
+  try {
+    const data = await apiFetch(`/api/music/${encodeURIComponent(oldName)}`, {
+      method:'PATCH', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ newName: newBase.trim() }),
+    });
+    if (data.error) throw new Error(data.error);
+    await loadMusic();
+  } catch(e) { alert('Lỗi đổi tên: ' + e.message); cancelMusicRename(oldName); }
+}
+
+function cancelMusicRename(filename) {
+  const el = document.getElementById(`mscname_${filename}`);
+  if (el) el.textContent = filename;
+}
+
+async function deleteMusic(filename) {
+  if (!confirm(`Xóa nhạc "${filename}"?`)) return;
+  try {
+    await apiFetch(`/api/music/${encodeURIComponent(filename)}`, { method:'DELETE' });
+    await loadMusic();
+  } catch(e) { alert('Lỗi: ' + e.message); }
 }
 
 // ─── Batch Start ──────────────────────────────────────────────────────────────
@@ -848,8 +1015,6 @@ async function startBatch() {
 
   const fd = new FormData();
   fd.append('items', JSON.stringify(valid));
-  const mf = document.getElementById('musicFile').files[0];
-  if (mf) fd.append('music', mf);
   fd.append('overlayOpacity', document.getElementById('overlayOpacity').value);
   fd.append('textY',          document.getElementById('textY').value);
   fd.append('titleFontSize',  document.getElementById('titleFontSize').value);
@@ -981,6 +1146,10 @@ function openRerenderModal(idx) {
   document.getElementById('rrTitleFsVal').textContent   = tf;
   document.getElementById('rrSubFsVal').textContent     = sf;
   document.getElementById('rrMaxCharsVal').textContent  = mc;
+  // Populate music select
+  const rrSel = document.getElementById('rrMusicFile');
+  rrSel.innerHTML = `<option value="">— Không có nhạc —</option>` +
+    musicFiles.map(f => `<option value="${esc(f.name)}" ${f.name===(item.musicFile||'')?'selected':''}>${esc(f.name)}</option>`).join('');
   document.getElementById('rerenderModal').classList.add('open');
 }
 
@@ -1011,6 +1180,7 @@ async function submitRerender() {
         titleFontSize:document.getElementById('rrTitleFs').value,
         subFontSize:  document.getElementById('rrSubFs').value,
         maxChars:     document.getElementById('rrMaxChars').value,
+        musicFile:    document.getElementById('rrMusicFile').value,
       }),
     });
     if (data.error) throw new Error(data.error);
@@ -1060,11 +1230,6 @@ function sv(el, vid) {
   document.getElementById(vid).textContent = el.value + suffix;
 }
 
-function onMusicPick(input) {
-  if (!input.files[0]) return;
-  document.getElementById('musicLabel').textContent = input.files[0].name;
-  document.getElementById('musicZone').classList.add('has-file');
-}
 
 function updatePreview() {
   const title   = document.getElementById('baseTitle').value || 'TIÊU ĐỀ';
@@ -1105,23 +1270,15 @@ uz.addEventListener('drop', e => {
   handleUpload(e.dataTransfer.files);
 });
 
-// Drag-drop for music zone
-const mz = document.getElementById('musicZone');
-mz.addEventListener('dragover', e => { e.preventDefault(); mz.classList.add('drag-over'); });
-mz.addEventListener('dragleave', () => mz.classList.remove('drag-over'));
-mz.addEventListener('drop', e => {
-  e.preventDefault(); mz.classList.remove('drag-over');
-  if (e.dataTransfer.files[0]) {
-    document.getElementById('musicLabel').textContent = e.dataTransfer.files[0].name;
-    mz.classList.add('has-file');
-    const dt = new DataTransfer();
-    dt.items.add(e.dataTransfer.files[0]);
-    document.getElementById('musicFile').files = dt.files;
-  }
-});
+// Drag-drop for music upload zone
+const muz = document.getElementById('musicUploadZone');
+muz.addEventListener('dragover', e => { e.preventDefault(); muz.classList.add('drag-over'); });
+muz.addEventListener('dragleave', () => muz.classList.remove('drag-over'));
+muz.addEventListener('drop', e => { e.preventDefault(); muz.classList.remove('drag-over'); handleMusicUpload(e.dataTransfer.files); });
 
 updatePreview();
 loadSources();
+loadMusic();
 checkSourceCount();
 </script>
 </body>

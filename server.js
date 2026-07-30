@@ -16,7 +16,9 @@ const UPLOAD_DIR  = path.join(__dirname, 'uploads');
 const OUTPUT_DIR  = path.join(__dirname, 'output');
 const SOURCES_DIR = path.join(__dirname, 'sources');
 const THUMBS_DIR  = path.join(__dirname, 'thumbnails');
-[UPLOAD_DIR, OUTPUT_DIR, SOURCES_DIR, THUMBS_DIR].forEach(d => fs.mkdirSync(d, { recursive: true }));
+const MUSIC_DIR   = path.join(__dirname, 'music');
+const MUSIC_EXT   = /\.(mp3|aac|wav|m4a|ogg|flac|wma)$/i;
+[UPLOAD_DIR, OUTPUT_DIR, SOURCES_DIR, THUMBS_DIR, MUSIC_DIR].forEach(d => fs.mkdirSync(d, { recursive: true }));
 
 const VIDEO_EXT = /\.(mp4|mov|avi|mkv|webm|m4v|wmv|flv)$/i;
 
@@ -54,6 +56,19 @@ const sourceStorage = multer.diskStorage({
   },
 });
 const uploadSource = multer({ storage: sourceStorage, limits: { fileSize: 2048 * 1024 * 1024 } });
+
+// multer for music library — saved to music/
+const musicLibStorage = multer.diskStorage({
+  destination: MUSIC_DIR,
+  filename: (req, file, cb) => {
+    const ext  = path.extname(file.originalname);
+    const base = path.basename(file.originalname, ext).replace(/[^a-zA-Z0-9._-]/g, '_');
+    let name = base + ext, i = 1;
+    while (fs.existsSync(path.join(MUSIC_DIR, name))) name = `${base}_${i++}${ext}`;
+    cb(null, name);
+  },
+});
+const uploadMusicLib = multer({ storage: musicLibStorage, limits: { fileSize: 200 * 1024 * 1024 } });
 
 // ─── Core helpers (unchanged) ─────────────────────────────────────────────────
 function autoWrap(text, maxChars = 26) {
@@ -225,7 +240,9 @@ async function processBatch(batchId) {
       if (!titleLines.length) throw new Error('Tiêu đề trống');
       generateASS({ ...batch.config, titleLines, subtitle: item.subtitle || '' }, assPath);
 
-      const args = buildFFmpegArgs(videoPath, batch.musicPath, assPath, batch.config, outputPath);
+      const itemMusicPath = (item.musicFile && fs.existsSync(path.join(MUSIC_DIR, item.musicFile)))
+        ? path.join(MUSIC_DIR, item.musicFile) : batch.musicPath;
+      const args = buildFFmpegArgs(videoPath, itemMusicPath, assPath, batch.config, outputPath);
       console.log(`[batch ${batchId.slice(0,6)}] ${i+1}/${batch.items.length} ← ${sourceFile}`);
 
       await new Promise((resolve, reject) => {
@@ -349,6 +366,50 @@ app.get('/api/sources/video/:filename', (req, res) => {
   streamFile(fp, req, res);
 });
 
+// ─── Music Library ────────────────────────────────────────────────────────────
+
+app.get('/api/music', (req, res) => {
+  try {
+    const files = fs.readdirSync(MUSIC_DIR)
+      .filter(f => MUSIC_EXT.test(f))
+      .map(f => ({ name: f, sizeMB: (fs.statSync(path.join(MUSIC_DIR, f)).size / 1024 / 1024).toFixed(1) }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    res.json({ files });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/music/upload', uploadMusicLib.array('audio', 50), (req, res) => {
+  if (!req.files?.length) return res.status(400).json({ error: 'Không có file' });
+  res.json({ uploaded: req.files.map(f => ({ name: f.filename, sizeMB: (fs.statSync(f.path).size / 1024 / 1024).toFixed(1) })) });
+});
+
+app.delete('/api/music/:filename', (req, res) => {
+  const fp = path.join(MUSIC_DIR, path.basename(req.params.filename));
+  if (!fs.existsSync(fp)) return res.status(404).json({ error: 'Không tìm thấy' });
+  fs.unlinkSync(fp);
+  res.json({ ok: true });
+});
+
+app.patch('/api/music/:filename', (req, res) => {
+  const oldName = path.basename(req.params.filename);
+  const rawNew  = (req.body.newName || '').trim();
+  if (!rawNew) return res.status(400).json({ error: 'Tên không hợp lệ' });
+  const ext     = path.extname(oldName);
+  const newName = rawNew.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9._-]/g, '_') + ext;
+  const oldPath = path.join(MUSIC_DIR, oldName);
+  const newPath = path.join(MUSIC_DIR, newName);
+  if (!fs.existsSync(oldPath)) return res.status(404).json({ error: 'Không tìm thấy' });
+  if (fs.existsSync(newPath) && oldName !== newName) return res.status(409).json({ error: 'Tên đã tồn tại' });
+  fs.renameSync(oldPath, newPath);
+  res.json({ name: newName });
+});
+
+app.get('/api/music/stream/:filename', (req, res) => {
+  const fp = path.join(MUSIC_DIR, path.basename(req.params.filename));
+  if (!fs.existsSync(fp)) return res.status(404).send('Không tìm thấy');
+  res.sendFile(fp);
+});
+
 // ─── Batch API ────────────────────────────────────────────────────────────────
 
 // Generate AI content
@@ -462,7 +523,7 @@ app.get('/api/batch/:batchId/status', (req, res) => {
 
 // Rerender a single video with updated settings
 app.post('/api/rerender', async (req, res) => {
-  const { batchId, index, title, subtitle, titleColor, subColor, titleFontSize, subFontSize, maxChars } = req.body;
+  const { batchId, index, title, subtitle, titleColor, subColor, titleFontSize, subFontSize, maxChars, musicFile } = req.body;
 
   const batch = batchJobs.get(batchId);
   if (!batch) return res.status(404).json({ error: 'Batch không tồn tại' });
@@ -500,7 +561,9 @@ app.post('/api/rerender', async (req, res) => {
     if (!titleLines.length) throw new Error('Tiêu đề trống');
     generateASS({ ...config, titleLines, subtitle: newSubtitle }, assPath);
 
-    const musicPath = batch.musicPath && fs.existsSync(batch.musicPath) ? batch.musicPath : null;
+    const musicPath = (musicFile && fs.existsSync(path.join(MUSIC_DIR, musicFile)))
+      ? path.join(MUSIC_DIR, musicFile)
+      : (batch.musicPath && fs.existsSync(batch.musicPath) ? batch.musicPath : null);
     const args = buildFFmpegArgs(videoPath, musicPath, assPath, config, outputPath);
 
     await new Promise((resolve, reject) => {
