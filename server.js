@@ -503,8 +503,8 @@ app.get('/api/batch/:batchId/status', (req, res) => {
       status: b.status,
       total:  b.items.length,
       done:   b.items.filter(x => x.status === 'done').length,
-      items:  b.items.map(({ title, subtitle, status, file, sizeMB, error, sourceName }) =>
-                ({ title, subtitle, status, file, sizeMB, error, sourceName })),
+      items:  b.items.map(({ title, subtitle, status, file, sizeMB, error, sourceName, musicFile }) =>
+                ({ title, subtitle, status, file, sizeMB, error, sourceName, musicFile })),
     };
   };
 

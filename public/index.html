@@ -1208,12 +1208,13 @@ async function submitRerender() {
     if (data.error) throw new Error(data.error);
 
     const item = currentBatch.items[rerenderIdx];
-    item.title    = document.getElementById('rrTitle').value;
-    item.subtitle = document.getElementById('rrSubtitle').value;
-    item.file     = data.file;
-    item.sizeMB   = data.sizeMB;
-    item.status   = 'done';
-    item.ts       = Date.now();
+    item.title     = document.getElementById('rrTitle').value;
+    item.subtitle  = document.getElementById('rrSubtitle').value;
+    item.musicFile = document.getElementById('rrMusicFile').value;
+    item.file      = data.file;
+    item.sizeMB    = data.sizeMB;
+    item.status    = 'done';
+    item.ts        = Date.now();
     updateProgressUI(currentBatch);
     closeRerenderModal();
   } catch(e) {
