@@ -469,9 +469,10 @@ app.post('/api/batch', uploadMusic.single('music'), (req, res) => {
     musicPath: req.file?.path || null,
     config,
     items: validItems.map(it => ({
-      title:    it.title.trim(),
-      subtitle: it.subtitle?.trim() || '',
-      status:   'queued',
+      title:     it.title.trim(),
+      subtitle:  it.subtitle?.trim() || '',
+      musicFile: it.musicFile || '',
+      status:    'queued',
     })),
     createdAt: Date.now(),
   });
